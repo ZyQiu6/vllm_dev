@@ -2093,6 +2093,8 @@ class SpeculativeConfig:
                 self.model = self.target_model_config.model
             elif self.method in ("ngram", "[ngram]"):
                 self.model = "ngram"
+            elif self.method in ("history_rollout"):    
+                self.model = "history_rollout"
             else:
                 raise ValueError("num_speculative_tokens was provided without "
                                  "speculative model.")
@@ -2134,6 +2136,20 @@ class SpeculativeConfig:
             # TODO: current we still need extract vocab_size from target model
             # config, in future, we may try refactor it out, and set
             # draft related config as None here.
+            self.draft_model_config = self.target_model_config
+            self.draft_parallel_config = self.target_parallel_config
+        elif self.method in ("history_rollout"):
+            if (self.prompt_lookup_min is None
+                    and self.prompt_lookup_max is None):
+                self.prompt_lookup_min = 5
+                self.prompt_lookup_max = 5
+            elif self.prompt_lookup_min is None:
+                assert self.prompt_lookup_max is not None
+                self.prompt_lookup_min = self.prompt_lookup_max
+            elif self.prompt_lookup_max is None:
+                assert self.prompt_lookup_min is not None
+                self.prompt_lookup_max = self.prompt_lookup_min
+                
             self.draft_model_config = self.target_model_config
             self.draft_parallel_config = self.target_parallel_config
         else:
