@@ -16,7 +16,7 @@ class HistoryRolloutProposer:
         self,
         sampled_token_ids: list[int],
         prompt_token_ids: list[int],
-        history_trees: dict[str, 'RewardAwareSuffixTree'],
+        history_trees: dict,
     ) -> Optional[np.ndarray]:
         """Proposes the next sequence of tokens based on n-gram pattern 
         matching in the context. The function finds matches of the last n 
