@@ -2034,6 +2034,9 @@ class SpeculativeConfig:
                                             init=True)  # type: ignore
     draft_parallel_config: ParallelConfig = field(default=None,
                                                   init=True)  # type: ignore
+    
+    # params to store extra info
+    extra_info: Optional[dict] = None
 
     def compute_hash(self) -> str:
         """

@@ -38,6 +38,7 @@ from vllm.v1.sample.rejection_sampler import RejectionSampler
 from vllm.v1.spec_decode.eagle import EagleProposer
 from vllm.v1.spec_decode.metadata import SpecDecodeMetadata
 from vllm.v1.spec_decode.ngram_proposer import NgramProposer
+from vllm.v1.spec_decode.history_rollout import HistoryRolloutProposer
 from vllm.v1.spec_decode.utils import is_spec_decode_supported
 from vllm.v1.utils import bind_kv_cache
 from vllm.v1.worker.gpu_input_batch import CachedRequestState, InputBatch
@@ -165,6 +166,8 @@ class GPUModelRunner(LoRAModelRunnerMixin):
                 elif self.speculative_config.method == "eagle":
                     self.drafter = EagleProposer(self.vllm_config,
                                                  self.device)  # type: ignore
+                elif self.speculative_config.method == "history_rollout":
+                    self.drafter = HistoryRolloutProposer(self.vllm_config)  # type: ignore
                 else:
                     raise ValueError("Unknown speculative decoding method: "
                                      f"{self.speculative_config.method}")
@@ -1149,6 +1152,17 @@ class GPUModelRunner(LoRAModelRunnerMixin):
             assert isinstance(self.drafter, NgramProposer)
             spec_token_ids = self.generate_draft_token_ids(
                 valid_sampled_token_ids, sampling_metadata)
+        elif self.speculative_config.method == "history_rollout":
+            assert isinstance(self.drafter, HistoryRolloutProposer)
+            spec_token_ids = []
+            for i, sampled_ids in enumerate(valid_sampled_token_ids):
+                req_id = self.input_batch.req_ids[i]
+                req_state = self.requests[req_id]
+                single_spec_token_ids = self.drafter.propose(
+                    req_state.output_token_ids + sampled_ids,
+                    req_state.prompt_token_ids,
+                    self.speculative_config.extra_info["history_trees"])
+                spec_token_ids.append(single_spec_token_ids)
         elif self.speculative_config.method == "eagle":
             assert isinstance(self.drafter, EagleProposer)
             # TODO(woosuk): Refactor the loop.
