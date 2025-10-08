@@ -44,9 +44,9 @@ class HistoryRolloutProposer:
         """
         batch_drafts = []
         prompt_id = str(hash(tuple(prompt_token_ids)))
-        history_tree = history_trees[prompt_id]
-        if not history_tree:
+        if prompt_id not in history_trees:
             return []
+        history_tree = history_trees[prompt_id]
         draft_tokens = None
         prefix_len_candidates = [7, 6, 5, 4, 3]
         for prefix_len in prefix_len_candidates:
