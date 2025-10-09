@@ -46,11 +46,10 @@ class HistoryRolloutProposer:
         """
         batch_drafts = []
         if self.debug_flag:
-            print(f"prompt_token_ids: {prompt_token_ids}")
+            print(f"proposer history_trees: {id(history_trees)}")
             self.debug_flag = False
         prompt_id = str(hash(tuple(prompt_token_ids)))
         if prompt_id not in history_trees:
-            print(f"history_trees: {history_trees}")
             return []
         else:
             print(f"{prompt_id} found in history_trees")

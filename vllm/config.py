@@ -2253,6 +2253,8 @@ class SpeculativeConfig:
             if self.posterior_alpha is None:
                 self.posterior_alpha = 0.3
 
+        print(f"spec config tree: {id(self.extra_info['history_trees'])}")
+
         self._verify_args()
 
     @staticmethod
