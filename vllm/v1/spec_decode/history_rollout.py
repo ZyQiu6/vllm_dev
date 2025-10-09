@@ -11,6 +11,7 @@ class HistoryRolloutProposer:
         # Maximum length of the HistoryRolloutTree to match.
         self.max_n = vllm_config.speculative_config.prompt_lookup_max
         # self.k = vllm_config.speculative_config.num_speculative_tokens
+        self.debug_flag = True
 
     def propose(
         self,
@@ -44,6 +45,9 @@ class HistoryRolloutProposer:
               we only have three tokens after the match.
         """
         batch_drafts = []
+        if self.debug_flag:
+            print(f"prompt_token_ids: {prompt_token_ids}")
+            self.debug_flag = False
         prompt_id = str(hash(tuple(prompt_token_ids)))
         if prompt_id not in history_trees:
             return []
