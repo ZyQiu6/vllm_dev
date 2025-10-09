@@ -14,6 +14,7 @@ class HistoryRolloutProposer:
 
     def propose(
         self,
+        accept_length: int,
         sampled_token_ids: list[int],
         prompt_token_ids: list[int],
         history_trees: dict,
@@ -46,13 +47,15 @@ class HistoryRolloutProposer:
         prompt_id = str(hash(tuple(prompt_token_ids)))
         if prompt_id not in history_trees:
             return []
+        else:
+            print(f"{prompt_id} found in history_trees")
         history_tree = history_trees[prompt_id]
         draft_tokens = None
-        prefix_len_candidates = [7, 6, 5, 4, 3]
+        prefix_len_candidates = range(self.max_n, self.min_n, -1)
         for prefix_len in prefix_len_candidates:
             if len(sampled_token_ids) >= prefix_len:
                 prefix = sampled_token_ids[-prefix_len:]
-                draft_tokens = history_tree.predict(history_tree, prefix, wnd_size)
+                draft_tokens = history_tree.predict(history_tree, prefix, accept_length)
                 if draft_tokens:
                     break
         batch_drafts.append(draft_tokens)

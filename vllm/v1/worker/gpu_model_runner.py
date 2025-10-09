@@ -1159,6 +1159,7 @@ class GPUModelRunner(LoRAModelRunnerMixin):
                 req_id = self.input_batch.req_ids[i]
                 req_state = self.requests[req_id]
                 single_spec_token_ids = self.drafter.propose(
+                    len(sampled_ids),
                     req_state.output_token_ids + sampled_ids,
                     req_state.prompt_token_ids,
                     self.speculative_config.extra_info["history_trees"])
