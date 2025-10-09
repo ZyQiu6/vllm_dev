@@ -134,13 +134,7 @@ class RewardAwareSuffixTree:
         self.subpath_index.clear()
 
 class GlobalRewardAwareSuffixTreeGroup:
-    _instance = None
     _dict: dict[str, RewardAwareSuffixTree] = {}
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
 
     def __len__(self):
         return len(self._dict)
@@ -160,3 +154,7 @@ class GlobalRewardAwareSuffixTreeGroup:
 
     def clear(self):
         self._dict.clear()
+
+global_history_trees = GlobalRewardAwareSuffixTreeGroup()
+def get_history_trees():
+    return global_history_trees

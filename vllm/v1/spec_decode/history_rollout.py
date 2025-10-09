@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 
 from vllm.config import VllmConfig
-from vllm.v1.spec_decode.global_module.suffix_tree import GlobalRewardAwareSuffixTreeGroup
+from vllm.v1.spec_decode.global_module.suffix_tree import get_history_trees
 
 class HistoryRolloutProposer:
     def __init__(self, vllm_config: VllmConfig):
@@ -23,7 +23,7 @@ class HistoryRolloutProposer:
         speculative decoding pattern.
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
-        history_trees = GlobalRewardAwareSuffixTreeGroup()
+        history_trees = get_history_trees()
         if not history_trees.exist(prompt_id):
             return []
         else:
