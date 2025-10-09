@@ -12,7 +12,6 @@ class HistoryRolloutProposer:
         # Maximum length of the HistoryRolloutTree to match.
         self.max_n = vllm_config.speculative_config.prompt_lookup_max
         # self.k = vllm_config.speculative_config.num_speculative_tokens
-        self.debug = True
 
     def propose(
         self,
@@ -24,10 +23,6 @@ class HistoryRolloutProposer:
         speculative decoding pattern.
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
-        if self.debug:
-            print(f"prompt_token_ids={prompt_token_ids}")
-            print(f"prompt_id={prompt_id}")
-            self.debug = False
         history_trees = GlobalRewardAwareSuffixTreeGroup()
         if not history_trees.exist(prompt_id):
             return []
