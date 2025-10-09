@@ -3,6 +3,7 @@ from typing import Optional
 import numpy as np
 
 from vllm.config import VllmConfig
+from vllm.v1.spec_decode.global_module.suffix_tree import GlobalRewardAwareSuffixTreeGroup
 
 class HistoryRolloutProposer:
     def __init__(self, vllm_config: VllmConfig):
@@ -11,14 +12,12 @@ class HistoryRolloutProposer:
         # Maximum length of the HistoryRolloutTree to match.
         self.max_n = vllm_config.speculative_config.prompt_lookup_max
         # self.k = vllm_config.speculative_config.num_speculative_tokens
-        self.debug_flag = True
 
     def propose(
         self,
         accept_length: int,
         sampled_token_ids: list[int],
-        prompt_token_ids: list[int],
-        history_trees: dict,
+        prompt_token_ids: list[int]
     ) -> Optional[np.ndarray]:
         """Proposes the next sequence of tokens based on n-gram pattern 
         matching in the context. The function finds matches of the last n 
@@ -45,15 +44,13 @@ class HistoryRolloutProposer:
               we only have three tokens after the match.
         """
         batch_drafts = []
-        if self.debug_flag:
-            print(f"proposer history_trees: {id(history_trees)}")
-            self.debug_flag = False
         prompt_id = str(hash(tuple(prompt_token_ids)))
-        if prompt_id not in history_trees:
+        history_trees = GlobalRewardAwareSuffixTreeGroup() 
+        if history_trees.exist(prompt_id):
             return []
         else:
             print(f"{prompt_id} found in history_trees")
-        history_tree = history_trees[prompt_id]
+        history_tree = history_trees.get(prompt_id)
         draft_tokens = None
         prefix_len_candidates = range(self.max_n, self.min_n, -1)
         for prefix_len in prefix_len_candidates:

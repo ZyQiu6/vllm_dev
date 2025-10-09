@@ -1161,8 +1161,7 @@ class GPUModelRunner(LoRAModelRunnerMixin):
                 single_spec_token_ids = self.drafter.propose(
                     len(sampled_ids),
                     req_state.output_token_ids + sampled_ids,
-                    req_state.prompt_token_ids,
-                    self.speculative_config.extra_info["history_trees"])
+                    req_state.prompt_token_ids)
                 spec_token_ids.append(single_spec_token_ids)
         elif self.speculative_config.method == "eagle":
             assert isinstance(self.drafter, EagleProposer)
