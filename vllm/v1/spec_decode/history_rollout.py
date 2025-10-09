@@ -45,7 +45,7 @@ class HistoryRolloutProposer:
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
         history_trees = GlobalRewardAwareSuffixTreeGroup() 
-        if history_trees.exist(prompt_id):
+        if not history_trees.exist(prompt_id):
             return []
         else:
             print(f"{prompt_id} found in history_trees")
