@@ -27,6 +27,7 @@ class HistoryRolloutProposer:
         if self.debug:
             print(f"prompt_token_ids={prompt_token_ids}")
             print(f"prompt_id={prompt_id}")
+            self.debug = False
         history_trees = GlobalRewardAwareSuffixTreeGroup()
         if not history_trees.exist(prompt_id):
             return []
