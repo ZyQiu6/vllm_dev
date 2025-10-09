@@ -43,7 +43,6 @@ class HistoryRolloutProposer:
               followed that pattern. Here we will return [4,2,3] because 
               we only have three tokens after the match.
         """
-        batch_drafts = []
         prompt_id = str(hash(tuple(prompt_token_ids)))
         history_trees = GlobalRewardAwareSuffixTreeGroup() 
         if history_trees.exist(prompt_id):
@@ -51,7 +50,7 @@ class HistoryRolloutProposer:
         else:
             print(f"{prompt_id} found in history_trees")
         history_tree = history_trees.get(prompt_id)
-        draft_tokens = None
+        draft_tokens = []
         prefix_len_candidates = range(self.max_n, self.min_n, -1)
         for prefix_len in prefix_len_candidates:
             if len(sampled_token_ids) >= prefix_len:
@@ -59,8 +58,7 @@ class HistoryRolloutProposer:
                 draft_tokens = history_tree.predict(history_tree, prefix, accept_length)
                 if draft_tokens:
                     break
-        batch_drafts.append(draft_tokens)
-        return batch_drafts
+        return draft_tokens
 
     def load_model(self, *args, **kwargs):
         # No model to load.

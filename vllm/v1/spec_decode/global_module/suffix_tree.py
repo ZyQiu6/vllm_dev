@@ -122,10 +122,10 @@ class RewardAwareSuffixTree:
         next_token, next_node = best_path_node(matched_nodes)
         if next_token:
             predicted_tokens.append(next_token)
-        for i in range(self.wnd_size - 1):
-            next_token, next_node = next_node.best_child()
-            if next_token:
-                predicted_tokens.append(next_token)
+            for i in range(self.wnd_size - 1):
+                next_token, next_node = next_node.best_child()
+                if next_token:
+                    predicted_tokens.append(next_token)
         
         return predicted_tokens
     
