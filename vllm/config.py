@@ -2143,7 +2143,8 @@ class SpeculativeConfig:
                     and self.prompt_lookup_max is None):
                 self.prompt_lookup_min = 2
                 self.prompt_lookup_max = 7
-            else:
+            elif (self.prompt_lookup_min is None
+                    or self.prompt_lookup_max is None):
                 raise ValueError(f"When using history rollout speculative decoding, \
                     both prompt_lookup_min and prompt_lookup_max must not be None")
                 
