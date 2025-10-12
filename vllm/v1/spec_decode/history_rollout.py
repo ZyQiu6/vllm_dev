@@ -25,10 +25,10 @@ class HistoryRolloutProposer:
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
         history_trees = get_history_trees()
-        if not history_trees.exist.remote(prompt_id):
-            return []
-        else:
+        if ray.get(history_trees.exist.remote(prompt_id)):
             print(f"{prompt_id} found in history_trees")
+        else:
+            return []
         history_tree = ray.get(history_trees.get.remote(prompt_id))
         draft_tokens = []
         prefix_len_candidates = range(self.max_n, self.min_n, -1)
