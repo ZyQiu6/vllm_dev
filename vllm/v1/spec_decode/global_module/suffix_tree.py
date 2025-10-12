@@ -110,7 +110,7 @@ class RewardAwareSuffixTree:
         if accept_length == 1:
             self.wnd_size = max(self.wnd_size // 2, 3)
         elif accept_length > 1 and accept_length < self.wnd_size:
-            self.wnd_size = min(self.wnd_size + 1, 32)
+            self.wnd_size = min(self.wnd_size + 1, 16)
         elif accept_length == self.wnd_size or accept_length == self.wnd_size + 1:
             self.wnd_size = self.wnd_size * 2
         else:
