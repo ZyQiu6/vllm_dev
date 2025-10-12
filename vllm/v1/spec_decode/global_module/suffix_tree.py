@@ -150,6 +150,9 @@ class GlobalRewardAwareSuffixTreeGroup:
         else:
             self._dict[prompt_id].add_node(seq, reward)
     
+    def predict(self, prompt_id, prefix, accept_length):
+        return self._dict[prompt_id].predict(prefix, accept_length)
+    
     def set(self, key, value):
         self._dict[key] = value
     
