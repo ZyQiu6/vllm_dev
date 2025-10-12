@@ -37,7 +37,7 @@ class TrieNode:
         for key in self.children.keys():
             if self.children[key].reward > max_reward:
                 best_token = key
-                best_child = node.children[key]
+                best_child = self.children[key]
         return best_token, best_child
     
     def clear(self):
