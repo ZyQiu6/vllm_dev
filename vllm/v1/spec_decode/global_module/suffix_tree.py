@@ -141,6 +141,15 @@ class GlobalRewardAwareSuffixTreeGroup:
     def __len__(self):
         return len(self._dict)
     
+    def add_tree(self, prompt_id):
+        self._dict[prompt_id] = RewardAwareSuffixTree()
+    
+    def tree_append_node(self, prompt_id, seq, reward):
+        if prompt_id not in self._dict:
+            raise ValueError(f"{prompt_id} not in GlobalRewardAwareSuffixTreeGroup")
+        else:
+            self._dict[prompt_id].add_node(seq, reward)
+    
     def set(self, key, value):
         self._dict[key] = value
     
