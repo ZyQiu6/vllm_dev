@@ -111,7 +111,7 @@ class RewardAwareSuffixTree:
             self.wnd_size = max(self.wnd_size // 2, 3)
         elif accept_length > 1 and accept_length < self.wnd_size:
             self.wnd_size = min(self.wnd_size + 1, 32)
-        elif accept_length == self.wnd_size:
+        elif accept_length == self.wnd_size or accept_length == self.wnd_size + 1:
             self.wnd_size = self.wnd_size * 2
         else:
             raise ValueError(f"accept length {accept_length} does not match history tree wnd_size {self.wnd_size}")
