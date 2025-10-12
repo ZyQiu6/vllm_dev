@@ -119,7 +119,7 @@ class RewardAwareSuffixTree:
         predicted_tokens = []
         
         matched_nodes = self.find_path_nodes(prefix)
-        print(f"predict matched nodes num: {len(matched_nodes)}")
+        # print(f"predict matched nodes num: {len(matched_nodes)}")
         next_token, next_node = best_path_node(matched_nodes)
         if next_token:
             predicted_tokens.append(next_token)
