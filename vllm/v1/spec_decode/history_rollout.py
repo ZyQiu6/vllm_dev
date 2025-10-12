@@ -1,5 +1,6 @@
 from typing import Optional
 
+import ray
 import numpy as np
 
 from vllm.config import VllmConfig
@@ -28,7 +29,7 @@ class HistoryRolloutProposer:
             return []
         else:
             print(f"{prompt_id} found in history_trees")
-        history_tree = history_trees.get(prompt_id)
+        history_tree = ray.get(history_trees.get.remote(prompt_id))
         draft_tokens = []
         prefix_len_candidates = range(self.max_n, self.min_n, -1)
         for prefix_len in prefix_len_candidates:

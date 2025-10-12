@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import ray
 import math
-import multiprocessing
-from multiprocessing.managers import BaseManager
 
 def best_path_node(nodes):
     best_child = None
@@ -135,6 +134,7 @@ class RewardAwareSuffixTree:
         self.root.clear()
         self.subpath_index.clear()
 
+@ray.remote
 class GlobalRewardAwareSuffixTreeGroup:
     _dict: dict[str, RewardAwareSuffixTree] = {}
 
@@ -157,23 +157,9 @@ class GlobalRewardAwareSuffixTreeGroup:
     def clear(self):
         self._dict.clear()
 
-global_history_trees = None
-
-def initialize_global_history_trees():
-    """
-    Must be called at first
-    """
-    global global_history_trees
-    
-    BaseManager.register('GlobalRewardAwareSuffixTreeGroup', GlobalRewardAwareSuffixTreeGroup)
-
-    manager = BaseManager()
-    manager.start()
-
-    global_history_trees = manager.GlobalRewardAwareSuffixTreeGroup()
-    print("[shared_state] Shared object initialized.")
-
 def get_history_trees():
-    if global_history_trees is None:
-        raise RuntimeError("Shared state is not initialized. Call initialize_global_history_trees() in the main process first.")
-    return global_history_trees
+    try:
+        actor_handle = ray.get_actor("global_trees_service")
+        return actor_handle
+    except ValueError:
+        print(f"Could not find the global actor.")
