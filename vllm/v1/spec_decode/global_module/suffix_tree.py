@@ -13,6 +13,7 @@
 # limitations under the License.
 import ray
 import math
+from enum import Enum
 
 def best_path_node(nodes):
     best_child = None
@@ -45,11 +46,19 @@ class TrieNode:
         self.reward = 0
 
 
+class CongestionState(Enum):
+    SLOW_START = 1
+    CONGESTION_AVOIDANCE = 2
+    SLOW_INCREASE = 3
+
 class RewardAwareSuffixTree:
     def __init__(self):
         self.root = TrieNode()
         self.subpath_index = {} # use tokens to represent nodes
+        self.state = CongestionState.SLOW_START
         self.wnd_size: int = 3 # number of predicted tokens
+        self.ssthresh = 16
+        self.max_wnd = 28
         
     def exist(self, path):
         node = self.root
@@ -106,15 +115,31 @@ class RewardAwareSuffixTree:
 
         return match_nodes
     
-    def predict(self, prefix, accept_length=1):
-        if accept_length == 1:
+    def update_wnd_size(self):
+        if self.state == CongestionState.SLOW_START:
+            self.wnd_size = min(self.wnd_size * 2, self.ssthresh)
+            if self.wnd_size == self.ssthresh:
+                self.state = CongestionState.SLOW_INCREASE
+        elif self.state == CongestionState.CONGESTION_AVOIDANCE:
             self.wnd_size = max(self.wnd_size // 2, 3)
-        elif accept_length > 1 and accept_length < self.wnd_size:
-            self.wnd_size = min(self.wnd_size + 1, 16)
-        elif accept_length == self.wnd_size or accept_length == self.wnd_size + 1:
-            self.wnd_size = self.wnd_size * 2
-        else:
-            raise ValueError(f"accept length {accept_length} does not match history tree wnd_size {self.wnd_size}")
+        elif self.state == CongestionState.SLOW_INCREASE:
+            self.wnd_size = min(self.wnd_size + 1, self.max_wnd)
+
+    def predict(self, prefix, accept_length=1):
+        if self.state == CongestionState.SLOW_START:
+            if accept_length == 1:
+                self.state = CongestionState.CONGESTION_AVOIDANCE
+            elif accept_length < self.wnd_size:
+                self.state = CongestionState.SLOW_INCREASE
+        elif self.state == CongestionState.CONGESTION_AVOIDANCE:
+            if accept_length >= self.wnd_size:
+                self.state = CongestionState.SLOW_INCREASE
+        elif self.state == CongestionState.SLOW_INCREASE:
+            if accept_length < self.wnd_size:
+                self.state = CongestionState.CONGESTION_AVOIDANCE
+            else:
+                self.state = CongestionState.SLOW_INCREASE
+        self.update_wnd_size()
 
         predicted_tokens = []
         

@@ -13,6 +13,8 @@ class HistoryRolloutProposer:
         # Maximum length of the HistoryRolloutTree to match.
         self.max_n = vllm_config.speculative_config.prompt_lookup_max
         # self.k = vllm_config.speculative_config.num_speculative_tokens
+        self.history_trees = get_history_trees()
+        self.prompt_lookup = vllm_config.speculative_config.prompt_lookup_max
 
     def propose(
         self,
@@ -24,17 +26,15 @@ class HistoryRolloutProposer:
         speculative decoding pattern.
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
-        history_trees = get_history_trees()
-        if not ray.get(history_trees.exist.remote(prompt_id)):
+        
+        if not ray.get(self.history_trees.exist.remote(prompt_id)):
             return []
         draft_tokens = []
-        prefix_len_candidates = range(self.max_n, self.min_n, -1)
-        for prefix_len in prefix_len_candidates:
-            if len(sampled_token_ids) >= prefix_len:
-                prefix = sampled_token_ids[-prefix_len:]
-                draft_tokens = ray.get(history_trees.predict.remote(prompt_id, prefix, accept_length))
-                if len(draft_tokens) > 0:
-                    break
+        if len(sampled_token_ids) >= self.prompt_lookup:
+            prefix = sampled_token_ids[-self.prompt_lookup:]
+            draft_tokens = ray.get(self.history_trees.predict.remote(prompt_id, prefix, accept_length))
+            if len(draft_tokens) == 0:
+                self.prompt_lookup = max(self.prompt_lookup - 1, self.min_n)
         return draft_tokens
 
     def load_model(self, *args, **kwargs):
