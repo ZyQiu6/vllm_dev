@@ -161,7 +161,8 @@ class RewardAwareSuffixTree:
 
 @ray.remote
 class SuffixTreeGroup:
-    _dict: dict[str, RewardAwareSuffixTree] = {}
+    def __init__(self):
+        self._dict: dict[str, RewardAwareSuffixTree] = {}
 
     def __len__(self):
         return len(self._dict)
@@ -193,6 +194,9 @@ class SuffixTreeGroup:
 
     def clear(self):
         self._dict.clear()
+    
+    def ready(self):
+        return True
 
 _num_groups: int = 4 # fixed
 class GlobalRewardAwareSuffixTreeGroup:
@@ -242,7 +246,7 @@ def init_history_trees():
     handles = []
     for i in range(_num_groups):
         actor_handle = SuffixTreeGroup.options(name=f"global_tree_{i}").remote()
-        handles.append(actor_handle)
+        handles.append(actor_handle.ready.remote())
     ray.get(handles)
 
 def get_history_trees():
