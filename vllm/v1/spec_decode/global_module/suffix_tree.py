@@ -202,7 +202,10 @@ class GlobalRewardAwareSuffixTreeGroup:
     def __init__(self):
         self.groups = []
         for i in range(_num_groups):
-            actor_handle = ray.get_actor(f"global_tree_{i}")
+            try:
+                actor_handle = ray.get_actor(f"global_tree_{i}")
+            except ValueError:
+                print(f"Could not find the global actor.")
             self.groups.append(actor_handle)
 
     def __len__(self):
@@ -228,7 +231,7 @@ class GlobalRewardAwareSuffixTreeGroup:
         actor = self._get_partition(prompt_id)
         return actor.delete.remote(prompt_id)
 
-    def exist(self, key):
+    def exist(self, prompt_id):
         actor = self._get_partition(prompt_id)
         return actor.exist.remote(prompt_id)
 
@@ -240,8 +243,5 @@ def init_history_trees():
         global_history_trees_actor = SuffixTreeGroup.options(name=f"global_tree_{i}").remote()
 
 def get_history_trees():
-    try:
-        history_trees = GlobalRewardAwareSuffixTreeGroup()
-        return history_trees
-    except ValueError:
-        print(f"Could not find the global actor.")
+    history_trees = GlobalRewardAwareSuffixTreeGroup()
+    return history_trees
