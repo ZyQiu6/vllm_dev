@@ -248,6 +248,12 @@ def init_history_trees():
         actor_handle = SuffixTreeGroup.options(name=f"global_tree_{i}").remote()
         handles.append(actor_handle.ready.remote())
     ray.get(handles)
+    for i in range(_num_groups):
+        try:
+            ray.get_actor(f"global_tree_{i}")
+            print(f"Actor {i} registered successfully.")
+        except ValueError:
+            print(f"Actor {i} failed to register.")
 
 def get_history_trees():
     history_trees = GlobalRewardAwareSuffixTreeGroup()
