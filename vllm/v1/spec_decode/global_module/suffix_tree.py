@@ -212,7 +212,7 @@ class GlobalRewardAwareSuffixTreeGroup:
         return len(self.groups)
 
     def _get_partition(self, prompt_id: str):
-        group_index = hash(prompt_id) % self.num_partitions
+        group_index = hash(prompt_id) % _num_groups
         return self.groups[group_index]
     
     def add_tree(self, prompt_id):
