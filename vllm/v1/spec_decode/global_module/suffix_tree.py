@@ -207,14 +207,12 @@ class GlobalRewardAwareSuffixTreeGroup:
                 self.groups.append(actor_handle)
             except ValueError:
                 print(f"Could not find the global actor.")
-        print(f"length of GlobalRewardAwareSuffixTreeGroup: {len(self.groups)}")
 
     def __len__(self):
         return len(self.groups)
 
     def _get_partition(self, prompt_id: str):
         group_index = hash(prompt_id) % _num_groups
-        print(f"group_index: {group_index}")
         return self.groups[group_index]
     
     def add_tree(self, prompt_id):
@@ -241,8 +239,11 @@ class GlobalRewardAwareSuffixTreeGroup:
         return [p.clear.remote() for p in self.groups]
 
 def init_history_trees():
+    handles = []
     for i in range(_num_groups):
-        global_history_trees_actor = SuffixTreeGroup.options(name=f"global_tree_{i}").remote()
+        actor_handle = SuffixTreeGroup.options(name=f"global_tree_{i}").remote()
+        handles.append(actor_handle)
+    ray.get(handles)
 
 def get_history_trees():
     history_trees = GlobalRewardAwareSuffixTreeGroup()
