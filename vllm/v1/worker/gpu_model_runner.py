@@ -1155,18 +1155,14 @@ class GPUModelRunner(LoRAModelRunnerMixin):
         elif self.speculative_config.method == "history_rollout":
             assert isinstance(self.drafter, HistoryRolloutProposer)
             spec_token_ids = []
-            # for i, sampled_ids in enumerate(valid_sampled_token_ids):
-            #     req_id = self.input_batch.req_ids[i]
-            #     req_state = self.requests[req_id]
-            #     single_spec_token_ids = self.drafter.propose(
-            #         len(sampled_ids),
-            #         req_state.output_token_ids + sampled_ids,
-            #         req_state.prompt_token_ids)
-            #     spec_token_ids.append(single_spec_token_ids)
-            spec_token_ids = self.drafter.propose(
-                                len(sampled_ids),
-                                req_state.output_token_ids + sampled_ids,
-                                req_state.prompt_token_ids)
+            for i, sampled_ids in enumerate(valid_sampled_token_ids):
+                req_id = self.input_batch.req_ids[i]
+                req_state = self.requests[req_id]
+                single_spec_token_ids = self.drafter.propose(
+                    len(sampled_ids),
+                    req_state.output_token_ids + sampled_ids,
+                    req_state.prompt_token_ids)
+                spec_token_ids.append(single_spec_token_ids)
         elif self.speculative_config.method == "eagle":
             assert isinstance(self.drafter, EagleProposer)
             # TODO(woosuk): Refactor the loop.
