@@ -204,9 +204,9 @@ class GlobalRewardAwareSuffixTreeGroup:
         for i in range(_num_groups):
             try:
                 actor_handle = ray.get_actor(f"global_tree_{i}")
+                self.groups.append(actor_handle)
             except ValueError:
                 print(f"Could not find the global actor.")
-            self.groups.append(actor_handle)
 
     def __len__(self):
         return len(self.groups)
