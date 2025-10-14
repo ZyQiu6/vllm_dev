@@ -160,7 +160,7 @@ class RewardAwareSuffixTree:
         self.subpath_index.clear()
 
 @ray.remote
-class GlobalRewardAwareSuffixTreeGroup:
+class SuffixTreeGroup:
     _dict: dict[str, RewardAwareSuffixTree] = {}
 
     def __len__(self):
@@ -194,9 +194,54 @@ class GlobalRewardAwareSuffixTreeGroup:
     def clear(self):
         self._dict.clear()
 
+_num_groups: int = 4 # fixed
+class GlobalRewardAwareSuffixTreeGroup:
+    """
+    All functions are non-blocking, return futures.
+    """
+    def __init__(self):
+        self.groups = []
+        for i in range(_num_groups):
+            actor_handle = ray.get_actor(f"global_tree_{i}")
+            self.groups.append(actor_handle)
+
+    def __len__(self):
+        return len(self.groups)
+
+    def _get_partition(self, prompt_id: str):
+        group_index = hash(prompt_id) % self.num_partitions
+        return self.groups[group_index]
+    
+    def add_tree(self, prompt_id):
+        actor = self._get_partition(prompt_id)
+        return actor.add_tree().remote(prompt_id)
+    
+    def tree_append_node(self, prompt_id, seq, reward):
+        actor = self._get_partition(prompt_id)
+        return actor.tree_append_node.remote(prompt_id, seq, reward)
+
+    def predict(self, prompt_id, prefix, accept_length):
+        actor = self._get_partition(prompt_id)
+        return actor.predict.remote(prompt_id, prefix, accept_length)
+
+    def delete(self, prompt_id):
+        actor = self._get_partition(prompt_id)
+        return actor.delete.remote(prompt_id)
+
+    def exist(self, key):
+        actor = self._get_partition(prompt_id)
+        return actor.exist.remote(prompt_id)
+
+    def clear(self):
+        return [p.clear.remote() for p in self.groups]
+
+def init_history_trees():
+    for i in range(_num_groups):
+        global_history_trees_actor = SuffixTreeGroup.options(name=f"global_tree_{i}").remote()
+
 def get_history_trees():
     try:
-        actor_handle = ray.get_actor("global_trees_service")
-        return actor_handle
+        history_trees = GlobalRewardAwareSuffixTreeGroup()
+        return history_trees
     except ValueError:
         print(f"Could not find the global actor.")
