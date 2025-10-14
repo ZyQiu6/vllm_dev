@@ -207,12 +207,14 @@ class GlobalRewardAwareSuffixTreeGroup:
                 self.groups.append(actor_handle)
             except ValueError:
                 print(f"Could not find the global actor.")
+        print(f"length of GlobalRewardAwareSuffixTreeGroup: {len(self.groups)}")
 
     def __len__(self):
         return len(self.groups)
 
     def _get_partition(self, prompt_id: str):
         group_index = hash(prompt_id) % _num_groups
+        print(f"group_index: {group_index}")
         return self.groups[group_index]
     
     def add_tree(self, prompt_id):
