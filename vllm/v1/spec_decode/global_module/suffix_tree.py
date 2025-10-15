@@ -163,6 +163,9 @@ class RewardAwareSuffixTree:
 class SuffixTreeGroup:
     def __init__(self):
         self._dict: dict[str, RewardAwareSuffixTree] = {}
+        self.predict_times = 0
+        self.effective_times = 0
+        self.total_right_length = 0
 
     def __len__(self):
         return len(self._dict)
@@ -177,6 +180,10 @@ class SuffixTreeGroup:
             self._dict[prompt_id].add_node(seq, reward)
     
     def predict(self, prompt_id, prefix, accept_length):
+        self.predict_times += 1
+        if accept_length > 0:
+            self.effective_times += 1
+        self.total_right_length += (accept_length - 1)
         return self._dict[prompt_id].predict(prefix, accept_length)
     
     def set(self, key, value):
@@ -191,9 +198,18 @@ class SuffixTreeGroup:
     def delete(self, key):
         if key in self._dict:
             del self._dict[key]
+            
+    def compute_metrics(self):
+        return {
+            'speculative_decoding/effective_percent': self.effective_times / self.predict_times,
+            'speculative_decoding/effective_length': self.total_right_length / self.effective_times,
+        }
 
     def clear(self):
         self._dict.clear()
+        self.predict_times = 0
+        self.effective_times = 0
+        self.total_right_length = 0
     
     def ready(self):
         return True
@@ -242,6 +258,14 @@ class GlobalRewardAwareSuffixTreeGroup:
 
     def clear(self):
         return [p.clear.remote() for p in self.groups]
+    
+    def compute_metrics(self):
+        tasks = [group.compute_metrics.remote() for group in self.groups]
+        metrics_list = ray.get(tasks)
+        res = {}
+        for key in metrics_list[0].keys():
+            res[key] = sum([metrics[key] for metrics in metrics_list]) / len(metrics_list)
+        return res
 
 def init_history_trees():
     global history_tree_handle
