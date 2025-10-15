@@ -181,7 +181,7 @@ class SuffixTreeGroup:
     
     def predict(self, prompt_id, prefix, accept_length):
         self.predict_times += 1
-        if accept_length > 0:
+        if accept_length > 1:
             self.effective_times += 1
         self.total_right_length += (accept_length - 1)
         return self._dict[prompt_id].predict(prefix, accept_length)
