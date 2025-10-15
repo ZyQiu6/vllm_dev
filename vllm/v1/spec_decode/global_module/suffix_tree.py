@@ -222,7 +222,7 @@ class GlobalRewardAwareSuffixTreeGroup:
     
     def add_tree(self, prompt_id):
         actor = self._get_partition(prompt_id)
-        return actor.add_tree().remote(prompt_id)
+        return actor.add_tree.remote(prompt_id)
     
     def tree_append_node(self, prompt_id, seq, reward):
         actor = self._get_partition(prompt_id)
