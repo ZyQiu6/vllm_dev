@@ -201,8 +201,9 @@ class SuffixTreeGroup:
             
     def compute_metrics(self):
         return {
-            'speculative_decoding/effective_percent': self.effective_times / self.predict_times,
-            'speculative_decoding/effective_length': self.total_right_length / self.effective_times,
+            'effective_times': self.effective_times,
+            'predict_times': self.predict_times,
+            'total_right_length': self.total_right_length,
         }
 
     def clear(self):
@@ -262,9 +263,17 @@ class GlobalRewardAwareSuffixTreeGroup:
     def compute_metrics(self):
         tasks = [group.compute_metrics.remote() for group in self.groups]
         metrics_list = ray.get(tasks)
-        res = {}
+        data = {}
         for key in metrics_list[0].keys():
-            res[key] = sum([metrics[key] for metrics in metrics_list]) / len(metrics_list)
+            data[key] = sum([metrics[key] for metrics in metrics_list])
+        effective_percent = data['effective_times'] / data['predict_times'] if data['predict_times'] != 0 \
+                                else 0
+        effective_length = data['total_right_length'] / data['effective_times'] if data['effective_times'] != 0 \
+                                else 0
+        res = {
+            'speculative_decoding/effective_percent': effective_percent,
+            'speculative_decoding/effective_length': effective_length,
+        }
         return res
 
 def init_history_trees():
