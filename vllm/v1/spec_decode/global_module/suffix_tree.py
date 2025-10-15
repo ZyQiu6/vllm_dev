@@ -199,6 +199,7 @@ class SuffixTreeGroup:
         return True
 
 _num_groups: int = 4 # fixed
+history_tree_handle = []
 class GlobalRewardAwareSuffixTreeGroup:
     """
     All functions are non-blocking, return futures.
@@ -243,11 +244,10 @@ class GlobalRewardAwareSuffixTreeGroup:
         return [p.clear.remote() for p in self.groups]
 
 def init_history_trees():
-    handles = []
+    global history_tree_handle
     for i in range(_num_groups):
         actor_handle = SuffixTreeGroup.options(name=f"global_tree_{i}").remote()
-        handles.append(actor_handle.ready.remote())
-    ray.get(handles)
+        history_tree_handle.append(actor_handle)
     for i in range(_num_groups):
         try:
             ray.get_actor(f"global_tree_{i}")
