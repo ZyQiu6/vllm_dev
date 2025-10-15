@@ -198,7 +198,7 @@ class SuffixTreeGroup:
     def ready(self):
         return True
 
-_num_groups: int = 4 # fixed
+_num_groups: int = 8 # fixed
 history_tree_handle = []
 class GlobalRewardAwareSuffixTreeGroup:
     """
