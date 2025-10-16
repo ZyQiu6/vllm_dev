@@ -16,6 +16,9 @@ class HistoryRolloutProposer:
         self.history_trees = get_history_trees()
         self.prompt_lookup = vllm_config.speculative_config.prompt_lookup_max
 
+    def update_history_trees(self):
+        self.history_trees.update_prompt_ids()
+
     def propose(
         self,
         accept_length: int,
@@ -27,7 +30,7 @@ class HistoryRolloutProposer:
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
         
-        if not ray.get(self.history_trees.exist(prompt_id)):
+        if not self.history_trees.exist(prompt_id):
             return []
         draft_tokens = []
         if len(sampled_token_ids) >= self.prompt_lookup:

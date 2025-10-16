@@ -59,6 +59,7 @@ class RewardAwareSuffixTree:
         self.wnd_size: int = 3 # number of predicted tokens
         self.ssthresh = 16
         self.max_wnd = 28
+        self.spec_enable = True
         
     def exist(self, path):
         node = self.root
@@ -194,6 +195,9 @@ class SuffixTreeGroup:
 
     def exist(self, key):
         return key in self._dict
+
+    def get_prompt_ids(self):
+        return list(self._dict.keys())
     
     def delete(self, key):
         if key in self._dict:
@@ -223,12 +227,20 @@ class GlobalRewardAwareSuffixTreeGroup:
     """
     def __init__(self):
         self.groups = []
+        self.prompt_ids = []
         for i in range(_num_groups):
             try:
                 actor_handle = ray.get_actor(f"global_tree_{i}")
                 self.groups.append(actor_handle)
+                self.prompt_ids = self.prompt_ids + ray.get(actor_handle.get_prompt_ids.remote())
             except ValueError:
                 print(f"Could not find the global actor.")
+
+    def update_prompt_ids(self):
+        self.prompt_ids = []
+        for i in range(_num_groups):
+            actor_handle = self.groups[i]
+            self.prompt_ids = self.prompt_ids + ray.get(actor_handle.get_prompt_ids.remote())
 
     def __len__(self):
         return len(self.groups)
@@ -254,8 +266,7 @@ class GlobalRewardAwareSuffixTreeGroup:
         return actor.delete.remote(prompt_id)
 
     def exist(self, prompt_id):
-        actor = self._get_partition(prompt_id)
-        return actor.exist.remote(prompt_id)
+        return (prompt_id in self.prompt_ids)
 
     def clear(self):
         return [p.clear.remote() for p in self.groups]

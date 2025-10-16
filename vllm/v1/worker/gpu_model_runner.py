@@ -1154,6 +1154,7 @@ class GPUModelRunner(LoRAModelRunnerMixin):
                 valid_sampled_token_ids, sampling_metadata)
         elif self.speculative_config.method == "history_rollout":
             assert isinstance(self.drafter, HistoryRolloutProposer)
+            self.drafter.update_history_trees()
             spec_token_ids = []
             for i, sampled_ids in enumerate(valid_sampled_token_ids):
                 req_id = self.input_batch.req_ids[i]
