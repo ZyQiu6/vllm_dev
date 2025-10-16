@@ -215,9 +215,6 @@ class SuffixTreeGroup:
         self.predict_times = 0
         self.effective_times = 0
         self.total_right_length = 0
-    
-    def ready(self):
-        return True
 
 _num_groups: int = 8 # fixed
 history_tree_handle = []
@@ -227,20 +224,19 @@ class GlobalRewardAwareSuffixTreeGroup:
     """
     def __init__(self):
         self.groups = []
-        self.prompt_ids = []
+        self.prompt_ids = set()
         for i in range(_num_groups):
             try:
                 actor_handle = ray.get_actor(f"global_tree_{i}")
                 self.groups.append(actor_handle)
-                self.prompt_ids = self.prompt_ids + ray.get(actor_handle.get_prompt_ids.remote())
             except ValueError:
                 print(f"Could not find the global actor.")
 
     def update_prompt_ids(self):
-        self.prompt_ids = []
-        for i in range(_num_groups):
-            actor_handle = self.groups[i]
-            self.prompt_ids = self.prompt_ids + ray.get(actor_handle.get_prompt_ids.remote())
+        prompt_ids = []
+        for actor_handle in self.groups:
+            prompt_ids.append(ray.get(actor_handle.get_prompt_ids.remote()))
+        self.prompt_ids = set(prompt_ids)
 
     def __len__(self):
         return len(self.groups)
