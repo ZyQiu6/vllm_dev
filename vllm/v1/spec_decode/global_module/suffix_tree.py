@@ -216,7 +216,7 @@ class SuffixTreeGroup:
         self.effective_times = 0
         self.total_right_length = 0
 
-_num_groups: int = 8 # fixed
+_num_groups: int = 4 # fixed
 history_tree_handle = []
 class GlobalRewardAwareSuffixTreeGroup:
     """
@@ -235,7 +235,7 @@ class GlobalRewardAwareSuffixTreeGroup:
     def update_prompt_ids(self):
         prompt_ids = []
         for actor_handle in self.groups:
-            prompt_ids.append(ray.get(actor_handle.get_prompt_ids.remote()))
+            prompt_ids.extend(ray.get(actor_handle.get_prompt_ids.remote()))
         self.prompt_ids = set(prompt_ids)
 
     def __len__(self):
@@ -262,7 +262,9 @@ class GlobalRewardAwareSuffixTreeGroup:
         return actor.delete.remote(prompt_id)
 
     def exist(self, prompt_id):
-        return (prompt_id in self.prompt_ids)
+        # return (prompt_id in self.prompt_ids)
+        actor = self._get_partition(prompt_id)
+        return actor.exist.remote(prompt_id)
 
     def clear(self):
         return [p.clear.remote() for p in self.groups]

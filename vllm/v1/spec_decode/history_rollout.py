@@ -30,7 +30,7 @@ class HistoryRolloutProposer:
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
         
-        if not self.history_trees.exist(prompt_id):
+        if not ray.get(self.history_trees.exist(prompt_id)):
             return []
         draft_tokens = []
         if len(sampled_token_ids) >= self.prompt_lookup:
