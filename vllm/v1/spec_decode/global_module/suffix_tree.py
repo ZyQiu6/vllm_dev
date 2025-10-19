@@ -153,6 +153,8 @@ class RewardAwareSuffixTree:
                 next_token, next_node = next_node.best_child()
                 if next_token:
                     predicted_tokens.append(next_token)
+                else:
+                    break
         
         return predicted_tokens
     
