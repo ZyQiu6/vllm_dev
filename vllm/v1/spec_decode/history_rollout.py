@@ -40,6 +40,39 @@ class HistoryRolloutProposer:
                 self.prompt_lookup = max(self.prompt_lookup - 1, self.min_n)
         return draft_tokens
 
+    def propose_batch(
+        self,
+        accept_length_list: list[int],
+        sampled_token_id_list: list[list[int]],
+        prompt_token_id_list: list[list[int]]
+    ) -> Optional[np.ndarray]:
+        """Proposes the next sequence of tokens based on history rollout
+        speculative decoding pattern.
+        """
+        batch_size = len(accept_length_list)
+        exist_tasks = []
+        for i in range(batch_size):
+            prompt_id = str(hash(tuple(prompt_token_id_list[i])))
+            exist_tasks.append(self.history_trees.exist(prompt_id))
+
+        predict_tasks = []
+        for i in range(batch_size):
+            if not ray.get(exist_tasks[i]):
+                predict_tasks.append(None)
+            sampled_token_ids = sampled_token_id_list[i]
+            prompt_id = str(hash(tuple(prompt_token_id_list[i])))
+            if len(sampled_token_ids) >= self.min_n:
+                prefix = sampled_token_ids[-self.min_n:]
+                predict_tasks.append(self.history_trees.predict(prompt_id, prefix, accept_length_list[i]))
+
+        batch_draft_tokens = []
+        for i range(batch_size):
+            if predict_tasks[i]:
+                batch_draft_tokens.append(ray.get(predict_tasks[i]))
+            else:
+                batch_draft_tokens.append([])
+        return batch_draft_tokens
+
     def load_model(self, *args, **kwargs):
         # No model to load.
         pass

@@ -162,7 +162,7 @@ class RewardAwareSuffixTree:
         self.root.clear()
         self.subpath_index.clear()
 
-@ray.remote
+@ray.remote(num_cpus=1)
 class SuffixTreeGroup:
     def __init__(self):
         self._dict: dict[str, RewardAwareSuffixTree] = {}
