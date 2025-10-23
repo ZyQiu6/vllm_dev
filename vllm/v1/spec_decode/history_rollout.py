@@ -66,7 +66,7 @@ class HistoryRolloutProposer:
                 predict_tasks.append(self.history_trees.predict(prompt_id, prefix, accept_length_list[i]))
 
         batch_draft_tokens = []
-        for i range(batch_size):
+        for i in range(batch_size):
             if predict_tasks[i]:
                 batch_draft_tokens.append(ray.get(predict_tasks[i]))
             else:
