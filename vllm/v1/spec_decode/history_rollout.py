@@ -55,9 +55,10 @@ class HistoryRolloutProposer:
             prompt_id = str(hash(tuple(prompt_token_id_list[i])))
             exist_tasks.append(self.history_trees.exist(prompt_id))
 
+        exist_res = ray.get(exist_tasks)
         predict_tasks = []
         for i in range(batch_size):
-            if not ray.get(exist_tasks[i]):
+            if not exist_res[i]:
                 predict_tasks.append(None)
             else:
                 sampled_token_ids = sampled_token_id_list[i]
@@ -65,6 +66,8 @@ class HistoryRolloutProposer:
                 if len(sampled_token_ids) >= self.min_n:
                     prefix = sampled_token_ids[-self.min_n:]
                     predict_tasks.append(self.history_trees.predict(prompt_id, prefix, accept_length_list[i]))
+                else:
+                    predict_tasks.append(None)
 
         batch_draft_tokens = []
         for i in range(batch_size):

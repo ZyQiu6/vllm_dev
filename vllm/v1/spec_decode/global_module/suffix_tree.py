@@ -174,6 +174,8 @@ class SuffixTreeGroup:
         return len(self._dict)
     
     def add_tree(self, prompt_id):
+        if prompt_id in self._dict:
+            return
         self._dict[prompt_id] = RewardAwareSuffixTree()
     
     def tree_append_node(self, prompt_id, seq, reward):
