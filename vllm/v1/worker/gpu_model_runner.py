@@ -1154,6 +1154,16 @@ class GPUModelRunner(LoRAModelRunnerMixin):
                 valid_sampled_token_ids, sampling_metadata)
         elif self.speculative_config.method == "history_rollout":
             assert isinstance(self.drafter, HistoryRolloutProposer)
+            """
+            ----单batch推测解码的变量说明----
+            i: 当前请求在批次中的索引
+            req_state： 当前请求的状态对象，包含req_state所代表的请求的生成的token序列和提示词等信息
+            req_id: 当前请求的唯一标识符
+            sampled_ids: 本轮请求的有效采样token序列，包含当前步骤中新生成并被接受的token
+            output_token_ids：请求状态中已确认生成的完整输出序列，包含从开始到上一轮解码结束的所有输出token
+            prompt_token_ids：请求状态中原始的提示词token序列
+            spec_token_ids: 存储每个请求的下一轮的推测token序列，经验证后裁剪为下一轮的sampled_ids
+            """
             # spec_token_ids = []
             # for i, sampled_ids in enumerate(valid_sampled_token_ids):
             #     req_id = self.input_batch.req_ids[i]

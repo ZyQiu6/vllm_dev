@@ -14,7 +14,6 @@
 import ray
 import math
 from enum import Enum
-import collections
 
 # 遍历nodes中的所有节点，找到其中分数最高的子节点及其代表的token
 def best_path_node(nodes):
@@ -50,17 +49,6 @@ class TrieNode:
     def clear(self):
         self.children.clear()
         self.reward = 0
-        
-    def __getstate__(self):
-        """序列化时将递归结构转换为扁平数据结构"""
-        # 只序列化基础数据，不直接序列化children字典
-        return {
-            'reward': self.reward,
-        }
-    
-    def __setstate__(self, state):
-        self.reward = state['reward']
-        self.children = {}
 
 
 # 拥塞状态
@@ -79,91 +67,6 @@ class SuffixTree:
         """
         self.root = TrieNode()
         self.subpath_index = {} # use tokens to represent nodes
-    
-    def __getstate__(self):
-        """将整个树结构扁平化为可序列化的格式"""
-        # 使用BFS遍历树，构建扁平结构
-        flat_nodes = []
-        node_id_map = {}  # 节点对象到ID的映射
-        next_id = 0
-        
-        # 为根节点分配ID
-        node_id_map[id(self.root)] = next_id
-        flat_nodes.append({
-            'id': next_id,
-            'parent_id': -1,  # 根节点没有父节点
-            'token': None,    # 根节点没有token
-            'reward': self.root.reward,
-            'children_tokens': list(self.root.children.keys())
-        })
-        next_id += 1
-        
-        # BFS遍历所有节点
-        # 队列中保存 (节点对象, 节点自身的ID)
-        queue = collections.deque([(self.root, 0)])
-        
-        while queue:
-            current_node, current_id = queue.popleft()
-            
-            for token, child_node in current_node.children.items():
-                child_id = id(child_node)
-                if child_id not in node_id_map:
-                    node_id_map[child_id] = next_id
-                    flat_nodes.append({
-                        'id': next_id,
-                        'parent_id': current_id,
-                        'token': token,
-                        'reward': child_node.reward,
-                        'children_tokens': list(child_node.children.keys())
-                    })
-                    queue.append((child_node, next_id))
-                    next_id += 1
-        
-        # 扁平化subpath_index
-        flat_subpath_index = {}
-        for token, nodes in self.subpath_index.items():
-            flat_subpath_index[token] = [node_id_map[id(node)] for node in nodes]
-        
-        return {
-            'flat_nodes': flat_nodes,
-            'flat_subpath_index': flat_subpath_index
-        }
-    
-    def __setstate__(self, state):
-        """从扁平数据重建树结构"""
-        self.root = TrieNode()
-        self.subpath_index = {}
-        
-        flat_nodes = state['flat_nodes']
-        flat_subpath_index = state['flat_subpath_index']
-        
-        # 创建ID到节点的映射
-        id_to_node = {}
-        
-        # 创建所有节点
-        for node_data in flat_nodes:
-            node_id = node_data['id']
-            if node_id == 0:  # 根节点
-                node = self.root
-            else:
-                node = TrieNode()
-            node.reward = node_data['reward']
-            id_to_node[node_id] = node
-        
-        # 重建父子关系
-        for node_data in flat_nodes:
-            node_id = node_data['id']
-            parent_id = node_data['parent_id']
-            token = node_data['token']
-            children_tokens = node_data['children_tokens']
-            
-            if parent_id != -1:  # 不是根节点
-                parent_node = id_to_node[parent_id]
-                parent_node.children[token] = id_to_node[node_id]
-        
-        # 重建subpath_index
-        for token, node_ids in flat_subpath_index.items():
-            self.subpath_index[token] = [id_to_node[node_id] for node_id in node_ids]
 
 
 # 后缀树类（为每个prompt维护一个）（实际上是前缀树）

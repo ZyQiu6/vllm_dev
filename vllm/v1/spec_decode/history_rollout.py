@@ -30,12 +30,12 @@ class HistoryRolloutProposer:
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
         
-        if not ray.get(self.history_trees.exist(prompt_id)):
+        if not self.history_trees.exist(prompt_id):
             return []
         draft_tokens = []
         if len(sampled_token_ids) >= self.prompt_lookup:
             prefix = sampled_token_ids[-self.prompt_lookup:]
-            draft_tokens = ray.get(self.history_trees.predict(prompt_id, prefix, accept_length))
+            draft_tokens = self.history_trees.predict(prompt_id, prefix, accept_length)
             if len(draft_tokens) == 0:
                 self.prompt_lookup = max(self.prompt_lookup - 1, self.min_n)
         return draft_tokens
@@ -57,7 +57,7 @@ class HistoryRolloutProposer:
 
         predict_tasks = []
         for i in range(batch_size):
-            if not ray.get(exist_tasks[i]):
+            if not exist_tasks[i]:
                 predict_tasks.append(None)
             else:
                 sampled_token_ids = sampled_token_id_list[i]
@@ -65,11 +65,13 @@ class HistoryRolloutProposer:
                 if len(sampled_token_ids) >= self.min_n:
                     prefix = sampled_token_ids[-self.min_n:]
                     predict_tasks.append(self.history_trees.predict(prompt_id, prefix, accept_length_list[i]))
+                else:
+                    predict_tasks.append(None)
 
         batch_draft_tokens = []
         for i in range(batch_size):
             if predict_tasks[i]:
-                batch_draft_tokens.append(ray.get(predict_tasks[i]))
+                batch_draft_tokens.append(predict_tasks[i])
             else:
                 batch_draft_tokens.append([])
         return batch_draft_tokens
