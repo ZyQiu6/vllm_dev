@@ -14,53 +14,24 @@
 import ray
 import math
 from enum import Enum
-import collections
+
 
 # 遍历nodes中的所有节点，找到其中分数最高的子节点及其代表的token
-def best_path_node(nodes):
-    best_child = None
+def best_path_node(tree: 'SuffixTree', node_ids: list[int]):
+    """从多个候选节点出发，选择其所有子节点中reward最大的下一跳。
+    返回 (best_token, best_child_id)。若无子节点，返回 (None, None)。"""
+    best_child_id = None
     best_token = None
     max_reward = -math.inf
-    for node in nodes:
-        for key in node.children.keys():
-            if node.children[key].reward > max_reward:
-                best_token = key
-                best_child = node.children[key]
-    return best_token, best_child
-
-
-# 后缀树节点类
-class TrieNode:
-    def __init__(self):
-        self.children = {}  # 直接子节点构成的字典，key为该子节点所代表的token，value为该子节点实例
-        self.reward = 0 # 当前节点的分数
-        
-    # 遍历当前节点的所有子节点，找到分数最高的子节点及其代表的token
-    def best_child(self):
-        best_child = None
-        best_token = None
-        max_reward = -math.inf
-        for key in self.children.keys():
-            if self.children[key].reward > max_reward:
-                best_token = key
-                best_child = self.children[key]
-        return best_token, best_child
-    
-    # 递归清除当前节点的子节点和当前节点，及其分数
-    def clear(self):
-        self.children.clear()
-        self.reward = 0
-        
-    def __getstate__(self):
-        """序列化时将递归结构转换为扁平数据结构"""
-        # 只序列化基础数据，不直接序列化children字典
-        return {
-            'reward': self.reward,
-        }
-    
-    def __setstate__(self, state):
-        self.reward = state['reward']
-        self.children = {}
+    for node_id in node_ids:
+        children_map = tree.parent_to_children.get(node_id, {})
+        for token, child_id in children_map.items():
+            child_reward = tree.nodes[child_id]['reward']
+            if child_reward > max_reward:
+                max_reward = child_reward
+                best_token = token
+                best_child_id = child_id
+    return best_token, best_child_id
 
 
 # 拥塞状态
@@ -70,103 +41,98 @@ class CongestionState(Enum):
     SLOW_INCREASE = 3
 
 
-# 仅包含数据结构的后缀树类（用于ray.put传输）
+# 后缀树类（用于ray.put传输）（实际上是前缀树）
 class SuffixTree:
     def __init__(self):
         """
-        - root: TrieNode, 后缀树的根节点
-        - subpath_index: dict, key: token, value: 所有以该token为key的节点的引用的列表
+        - next_node_id: 分配下一节点的id
+        - nodes: 节点表，包含所有节点的一些信息，key：node_id，value：每个value是一个含"parent_id", "token", "reward"三个key的字典
+        - children: 邻接表，key：(parent_id, token)元组，value：child_id（用于查找parent是否有的指定token的children）
+        - parent_to_children: 父到子索引，key：parent_id，value：{token -> child_id}字典（用于查找parent的所有children的token->id信息）
+        - token_to_node_ids: key：token，value：包含该token的节点ID列表（原subpath_index）
         """
-        self.root = TrieNode()
-        self.subpath_index = {} # use tokens to represent nodes
+        self.next_node_id = 1  # 0保留给root
+        self.nodes = {
+            0: {
+                'parent_id': -1,
+                'token': None,
+                'reward': 0,
+            }
+        }
+        self.children = {}
+        self.parent_to_children = {}
+        self.token_to_node_ids = {}
     
     def __getstate__(self):
-        """将整个树结构扁平化为可序列化的格式"""
-        # 使用BFS遍历树，构建扁平结构
-        flat_nodes = []
-        node_id_map = {}  # 节点对象到ID的映射
-        next_id = 0
-        
-        # 为根节点分配ID
-        node_id_map[id(self.root)] = next_id
-        flat_nodes.append({
-            'id': next_id,
-            'parent_id': -1,  # 根节点没有父节点
-            'token': None,    # 根节点没有token
-            'reward': self.root.reward,
-            'children_tokens': list(self.root.children.keys())
-        })
-        next_id += 1
-        
-        # BFS遍历所有节点
-        # 队列中保存 (节点对象, 节点自身的ID)
-        queue = collections.deque([(self.root, 0)])
-        
-        while queue:
-            current_node, current_id = queue.popleft()
-            
-            for token, child_node in current_node.children.items():
-                child_id = id(child_node)
-                if child_id not in node_id_map:
-                    node_id_map[child_id] = next_id
-                    flat_nodes.append({
-                        'id': next_id,
-                        'parent_id': current_id,
-                        'token': token,
-                        'reward': child_node.reward,
-                        'children_tokens': list(child_node.children.keys())
-                    })
-                    queue.append((child_node, next_id))
-                    next_id += 1
-        
-        # 扁平化subpath_index
-        flat_subpath_index = {}
-        for token, nodes in self.subpath_index.items():
-            flat_subpath_index[token] = [node_id_map[id(node)] for node in nodes]
-        
+        """直接返回已维护的扁平结构"""
         return {
-            'flat_nodes': flat_nodes,
-            'flat_subpath_index': flat_subpath_index
+            'next_node_id': self.next_node_id,
+            'nodes': self.nodes,
+            'children': self.children,
+            'parent_to_children': self.parent_to_children,
+            'token_to_node_ids': self.token_to_node_ids,
         }
     
     def __setstate__(self, state):
-        """从扁平数据重建树结构"""
-        self.root = TrieNode()
-        self.subpath_index = {}
-        
-        flat_nodes = state['flat_nodes']
-        flat_subpath_index = state['flat_subpath_index']
-        
-        # 创建ID到节点的映射
-        id_to_node = {}
-        
-        # 创建所有节点
-        for node_data in flat_nodes:
-            node_id = node_data['id']
-            if node_id == 0:  # 根节点
-                node = self.root
-            else:
-                node = TrieNode()
-            node.reward = node_data['reward']
-            id_to_node[node_id] = node
-        
-        # 重建父子关系
-        for node_data in flat_nodes:
-            node_id = node_data['id']
-            parent_id = node_data['parent_id']
-            token = node_data['token']
-            children_tokens = node_data['children_tokens']
-            
-            if parent_id != -1:  # 不是根节点
-                parent_node = id_to_node[parent_id]
-                parent_node.children[token] = id_to_node[node_id]
-        
-        # 重建subpath_index
-        for token, node_ids in flat_subpath_index.items():
-            self.subpath_index[token] = [id_to_node[node_id] for node_id in node_ids]
+        """恢复扁平结构"""
+        self.next_node_id = state['next_node_id']
+        self.nodes = state['nodes']
+        self.children = state['children']
+        self.parent_to_children = state.get('parent_to_children', {})
+        self.token_to_node_ids = state.get('token_to_node_ids', {})
+
+    def exist_path(self, path: list) -> bool:
+        if not path:
+            return False
+        current_id = 0
+        for token in path:
+            key = (current_id, token)
+            if key not in self.children:
+                return False
+            current_id = self.children[key]
+        return True
+
+    def add_path(self, path: list, reward: float) -> None:
+        if not path:
+            return
+        current_id = 0
+        for token in path:
+            key = (current_id, token)
+            if key not in self.children:
+                new_id = self.next_node_id
+                self.next_node_id += 1
+                # 更新children
+                self.children[key] = new_id
+                # 更新parent_to_children
+                if current_id not in self.parent_to_children:
+                    self.parent_to_children[current_id] = {}
+                self.parent_to_children[current_id][token] = new_id
+                # 更新nodes
+                self.nodes[new_id] = {
+                    'parent_id': current_id,
+                    'token': token,
+                    'reward': 0,
+                }
+                # 更新token_to_node_ids
+                self.token_to_node_ids.setdefault(token, []).append(new_id) # 如果不存在该键值对则创建
+            current_id = self.children[key]
+            self.nodes[current_id]['reward'] += reward
+
+    def clear_flat(self):
+        self.next_node_id = 1
+        self.nodes = {
+            0: {
+                'parent_id': -1,
+                'token': None,
+                'reward': 0,
+            }
+        }
+        self.children = {}
+        self.parent_to_children = {}
+        self.token_to_node_ids = {}
 
 
-# 后缀树类（为每个prompt维护一个）（实际上是前缀树）
+# 后缀树类封装（为每个prompt维护一个）
 class SuffixTreePack:
     def __init__(self):
         """
@@ -185,14 +151,9 @@ class SuffixTreePack:
         self.max_wnd = 28
         self.spec_enable = True
         
-    # 检查路径path是否存在与该后缀树中
+    # 检查路径path是否存在于该后缀树中
     def exist(self, path):
-        node = self.tree.root
-        for char in path:
-            if char not in node.children:
-                return False
-            node = node.children[char]
-        return True
+        return self.tree.exist_path(path)
     
     # 递归将一个路径path加入树中，更新树的subpath_index和每个节点的children和reward
     def add_node(self, path, reward):
@@ -202,50 +163,36 @@ class SuffixTreePack:
         """
         if self.exist(path):
             return
-        node = self.tree.root
-        for char in path:
-            if char not in node.children:
-                node.children[char] = TrieNode()
-                if char not in self.tree.subpath_index:
-                    self.tree.subpath_index[char] = [node.children[char]]
-                else:
-                    self.tree.subpath_index[char].append(node.children[char])
-            node = node.children[char]
-            node.reward += reward
+        self.tree.add_path(path, reward)
             
     # 清空树
     def clear(self):
-        self.tree.root.clear()
-        self.tree.subpath_index.clear()
+        self.tree.clear_flat()
 
 
 # 检查某个前缀prefix在树中出现的位置，返回所有匹配的节点列表
 def find_path_nodes(tree: SuffixTree, prefix: list) -> list:
-    """
-    Fast search path. Prefix may not start from root
-    """
     # prefix前缀序列，即已经根据prompt生成的token序列的后缀
     if not prefix:
         return []
     first_element = prefix[0]
-    if first_element not in tree.subpath_index:
-        return []
-    start_nodes = tree.subpath_index[first_element]
-    match_nodes = []
-    
-    # O(N_starts * L) where N_starts is the number of starting nodes and L isprefix length
-    for start_node in start_nodes:
-        current_node = start_node
+    start_ids = tree.token_to_node_ids.get(first_element, [])
+    match_ids = []
+    # O(N_starts * L)
+    for start_id in start_ids:
+        current_id = start_id
         match_length = 1
+        ok = True
         for element in prefix[1:]:
-            if element in current_node.children:
-                current_node = current_node.children[element]
-                match_length += 1
-            else:
+            next_id = tree.parent_to_children.get(current_id, {}).get(element)
+            if next_id is None:
+                ok = False
                 break
-        if match_length == len(prefix):
-            match_nodes.append(current_node)
-    return match_nodes
+            current_id = next_id
+            match_length += 1
+        if ok and match_length == len(prefix):
+            match_ids.append(current_id)
+    return match_ids
 
 
 # 更新本次预测的token数量
@@ -283,17 +230,30 @@ def predict(suffix_tree_handle: ray.ObjectRef, wnd_size, state, ssthresh, max_wn
     wnd_size, state = update_wnd_size(wnd_size, state, ssthresh, max_wnd)
     predicted_tokens = []
     
-    matched_nodes = find_path_nodes(suffix_tree, prefix)
-    # print(f"predict matched nodes num: {len(matched_nodes)}")
-    next_token, next_node = best_path_node(matched_nodes)
-    if next_token:
+    matched_node_ids = find_path_nodes(suffix_tree, prefix)
+    next_token, next_node_id = best_path_node(suffix_tree, matched_node_ids)
+    if next_token is not None:
         predicted_tokens.append(next_token)
+        # 下面沿着单条最大奖励路径逐步扩展
+        current_id = next_node_id
         for i in range(wnd_size - 1):
-            next_token, next_node = next_node.best_child()
-            if next_token:
-                predicted_tokens.append(next_token)
-            else:
+            children_map = suffix_tree.parent_to_children.get(current_id, {})
+            if not children_map:
                 break
+            # 选择当前节点的最佳子节点
+            best_tok = None
+            best_child = None
+            best_reward = -math.inf
+            for token, id in children_map.items():
+                r = suffix_tree.nodes[id]['reward']
+                if r > best_reward:
+                    best_reward = r
+                    best_tok = token
+                    best_child = id
+            if best_tok is None:
+                break
+            predicted_tokens.append(best_tok)
+            current_id = best_child
     
     return wnd_size, state, predicted_tokens
 
@@ -312,7 +272,7 @@ class SuffixTreeGroup:
     
     # 为prompt新建维护一个树
     def add_tree(self, prompt_id):
-        if prompt_id in self._dict:
+        if prompt_id in self.dict:
             return
         self.dict[prompt_id] = SuffixTreePack()
     
@@ -329,7 +289,7 @@ class SuffixTreeGroup:
         if accept_length > 1:
             self.effective_times += 1
         self.total_right_length += (accept_length - 1)
-        predict_ref = predict.remote(
+        return predict.remote(
             self.dict[prompt_id].tree_ray_handle,
             self.dict[prompt_id].wnd_size,
             self.dict[prompt_id].state,
@@ -338,8 +298,6 @@ class SuffixTreeGroup:
             prefix,
             accept_length
         )
-        self.dict[prompt_id].wnd_size, self.dict[prompt_id].state, predict_tokens = ray.get(predict_ref)
-        return predict_tokens
     
     def set(self, key, value):
         self.dict[key] = value

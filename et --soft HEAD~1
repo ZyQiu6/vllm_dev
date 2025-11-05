@@ -1,0 +1,244 @@
+[33m0b947a546[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mv0.8.3_xy[m[33m)[m fix bug
+[33ma6dd0f36a[m totally flat tree structure
+[33m28ee69d1a[m optim_tree
+[33mb1ea0a1a0[m[33m ([m[1;32mv0.8.3_dev[m[33m)[m fix bug
+[33mcdad80a3a[m fix bug
+[33m0a8a26f22[m propose batch
+[33m476f19f20[m fix bug
+[33m7e3efecf5[m fix bug
+[33m48e94174a[m fix bug
+[33m67ca999e1[m try to optimize
+[33m5f753cc2d[m fix bug
+[33m5b54b6ddf[m fix bug
+[33m1035f1059[m add metrics
+[33mba37b45a3[m try to optimize
+[33m06c7fee51[m fix bug
+[33m5d749cbbc[m fix bug
+[33m36e9b2d1e[m debug
+[33m8d4db3bf5[m fix bug
+[33m389dcc18d[m fix bug
+[33m17ad000b6[m debug
+[33m8bfdbbf5f[m fix bug
+[33m8c0c31b87[m fix bug
+[33m71161fa67[m fix bug
+[33mb793cc2f4[m fix bug
+[33md62c11035[m parallel history trees
+[33m0c136e6f4[m cong algorithm fix
+[33m0e39a9a10[m fix bug
+[33m1e8766f26[m del print
+[33mdded45dd7[m fix bug
+[33mfb476dc87[m fix bug
+[33mae4690e19[m fix bug
+[33m750544b37[m fix bug
+[33m9ba33fc4a[m fix bug
+[33meaf0db67e[m fix bug
+[33m5f522cc19[m fix bug
+[33m1e2105a55[m use ray to share
+[33mc0a24b76c[m multiporcess suffix tree
+[33mf07fb601a[m global var
+[33mac2c2ce72[m debug
+[33m583491ff4[m debug
+[33m596cf6ae8[m debug test
+[33md79131a0d[m fix bug
+[33md68129bd4[m fix histospec
+[33mf96a99a37[m global suffix tree
+[33mf149b211b[m check trees addr
+[33mfb7c0b10c[m debug
+[33mb7cf06e69[m debug
+[33m41caf27bf[m fix bug
+[33mf9d31f3c5[m print to check if spec is true
+[33m6662fc7d0[m fix bug
+[33m0642ecc4d[m fix bug
+[33me93737270[m fix bug
+[33mb21863234[m fix bug
+[33md368c7551[m history rollout spec_decode
+[33m296c6572d[m[33m ([m[1;33mtag: [m[1;33mv0.8.3[m[33m, [m[1;31morigin/v0.8.3[m[33m)[m Revert "[V1] DP scale-out (1/N): Use zmq ROUTER/DEALER sockets for input queue (#15906)"
+[33mc57523239[m [Model] Support Llama4 in vLLM (#16104)
+[33m63375f0cd[m[33m ([m[1;33mtag: [m[1;33mv0.8.3rc1[m[33m)[m [V1][Spec Decode] Update N-gram Proposer Interface (#15750)
+[33m70ad3f9e9[m [Bugfix][TPU] Fix V1 TPU worker for sliding window (#16059)
+[33md6fc629f4[m [Kernel][Minor] Re-fuse triton moe weight application (#16071)
+[33maf51d80fa[m Revert "[V1] Scatter and gather placeholders in the model runner" (#16075)
+[33mf5722a505[m [V1] Scatter and gather placeholders in the model runner (#15712)
+[33m651cf0fec[m [V1] DP scale-out (1/N): Use zmq ROUTER/DEALER sockets for input queue (#15906)
+[33m4dc52e1c5[m [CI] Reorganize .buildkite directory (#16001)
+[33m4708f13a9[m [Bugfix] Fix default behavior/fallback for pp in v1 (#16057)
+[33ma6d042df0[m [ROCm][Bugfix] Bring back fallback to eager mode removed in #14917, but for ROCm only (#15413)
+[33m40a36ccfe[m [ROCm][Bugfix] Use platform specific FP8 dtype (#15717)
+[33mef608c37a[m [Distributed] [ROCM] Fix custom allreduce enable checks (#16010)
+[33m2386803f2[m [CPU] Change default block_size for CPU backend (#16002)
+[33m95862f7b4[m [Benchmark][Doc] Update throughput benchmark and README (#15998)
+[33m230b131b5[m [Bugfix][kernels] Fix half2float conversion in gguf kernels (#15995)
+[33m0812d8dd4[m [Hardware][Gaudi][BugFix] fix arguments of hpu fused moe (#15945)
+[33mbf7e3c51a[m [Model] use AutoWeightsLoader for baichuan, gpt-neox, mpt (#15939)
+[33ma35a8a839[m [V1][Spec Decode] Avoid logging useless nan metrics (#16023)
+[33m4ef0bb1fc[m doc: add info for macos clang errors (#16049)
+[33mfadc59c0e[m [TPU][V1] Remove ragged attention kernel parameter hard coding (#16041)
+[33m86cbd2eee[m [Misc] improve gguf check (#15974)
+[33m092475f73[m [ROCm] Tweak the benchmark script to run on ROCm (#14252)
+[33mdcc56d62d[m [Bugfix] Fix function names in test_block_fp8.py (#16033)
+[33mf15e70d90[m [TPU] Switch Test to Non-Sliding Window (#15981)
+[33mb6be6f8d1[m [TPU] Support sliding window and logit soft capping in the paged attention kernel for TPU. (#15732)
+[33m03a70eaca[m Re-enable the AMD Testing for the passing tests. (#15586)
+[33m45b1ff7a2[m [Misc][Performance] Advance tpu.txt to the most recent nightly torch … (#16024)
+[33m15ba07ef2[m [Minor] Fused experts refactor (#15914)
+[33md2b58ca20[m [Neuron][kernel] Fuse kv cache into a single tensor (#15911)
+[33m82e7e19a6[m [SupportsQuant] Chameleon, Chatglm, Commandr (#15952)
+[33m421c46294[m [SupportsQuant] Bert, Blip, Blip2, Bloom (#15573)
+[33m84884cd9a[m fix: tiny fix make format.sh excutable (#16015)
+[33ma43aa183d[m [doc] update contribution link (#15922)
+[33m463bbb183[m [Bugfix][V1] Fix bug from putting llm_engine.model_executor in a background process (#15367)
+[33m5e125e74d[m [misc] improve error message for "Failed to infer device type" (#15994)
+[33m06f21ce7a[m [Benchmark] Add AIMO Dataset to Benchmark (#15955)
+[33m57a810db9[m [ROCM][V0] PA kennel selection when no sliding window provided (#15982)
+[33m8b664706a[m [bugfix] add seed in torchrun_example.py (#15980)
+[33m37bfee92b[m fix: better error message for get_config close #13889 (#15943)
+[33me73ff24e3[m [ROCM][KERNEL] Paged attention for V1 (#15720)
+[33mbd7599d34[m [V1][TPU] Do not compile sampling more than needed (#15883)
+[33m01b611365[m [TPU] optimize the all-reduce performance (#15903)
+[33m1b84eff03[m [V1][TPU] TPU-optimized top-p implementation (avoids scattering). (#15736)
+[33m55acf86bf[m Fix `huggingface-cli[hf-xet]` -> `huggingface-cli[hf_xet]` (#15969)
+[33mf021b9799[m [V1] Support Mistral3 in V1 (#15950)
+[33m1cab43c2d[m [misc] instruct pytorch to use nvml-based cuda check (#15951)
+[33m8bd651b31[m Restricted cmake to be less than version 4 as 4.x breaks the build of… (#15859)
+[33m58e234a75[m [Misc] V1 LoRA support CPU offload (#15843)
+[33me86c414d6[m [Model] use AutoWeightsLoader in model load_weights (#15770)
+[33m550b2801a[m [CPU][Bugfix] Using custom allreduce for CPU backend (#15934)
+[33mcefb9e5a2[m [Frontend] Implement Tool Calling with `tool_choice='required'` (#13483)
+[33m98d7367b6[m [Metrics] Hide deprecated metrics (#15458)
+[33m594a8b903[m [Bugfix] Fix the issue where the model name is empty string, causing no response with the model name. (#15938)
+[33m44f990515[m [CI] Remove duplicate entrypoints-test (#15940)
+[33m252937806[m [Bugfix][Benchmarks] Ensure `async_request_deepspeed_mii` uses the OpenAI choices key (#15926)
+[33m51826d51f[m Add minimum version for `huggingface_hub` to enable Xet downloads (#15873)
+[33m14e53ed11[m [V1] Fix json_object support with xgrammar (#15488)
+[33mddb94c260[m [core] Add tags parameter to wake_up() (#15500)
+[33m90969fb39[m [Kernel] Add more dtype support for GGUF dequantization (#15879)
+[33m101f1481f[m [Build/CI] Update lm-eval to 0.4.8 (#15912)
+[33m2edc87b16[m [Bugfix] Fix cache block size calculation for CPU MLA (#15848)
+[33m4203926f1[m [CI/Build] Further clean up LoRA tests (#15920)
+[33mcdb57015a[m [Misc] Replace print with logger (#15923)
+[33maa557e642[m [Benchmark]Fix error message (#15866)
+[33m0e00d40e4[m [V1][Bugfix] Fix typo in MoE TPU checking (#15927)
+[33mc920e0124[m [Doc] Update rocm.inc.md (#15917)
+[33m274d8e881[m [V1][Minor] Enhance SpecDecoding Metrics Log in V1 (#15902)
+[33m2039c6305[m [Bugfix] Fix imports for MoE on CPU (#15841)
+[33m6efb195a6[m [V1] Fix: make sure `k_index` is int64 for `apply_top_k_only` (#15907)
+[33m24b7fb455[m [Spec Decode] Fix input triton kernel for eagle (#15909)
+[33m58f5a5976[m [Docs] Add Intel as Sponsor (#15913)
+[33mdb9dfcfa6[m [Docs] Add Ollama meetup slides (#15905)
+[33m9ef98d527[m [Model][MiniMaxText01] Support MiniMaxText01 model inference (#13454)
+[33m93491aefc[m [BugFix] make sure socket close (#15875)
+[33m7acd539cd[m [Docs] update usage stats language (#15898)
+[33me75a6301b[m [V1][Spec Decode] Implement Eagle Proposer [1/N] (#15729)
+[33ma79cc68b3[m [V1][Metrics] Initial speculative decoding metrics (#15151)
+[33m7e3f7a4ee[m [CI] Disable flaky structure decoding test temporarily. (#15892)
+[33m9ec825791[m [Model] Add module name prefixes to gemma3 (#15889)
+[33m38327cf45[m [Model] Aya Vision (#15441)
+[33mdfa82e2a3[m [CI/Build] Clean up LoRA tests (#15867)
+[33me59ca942f[m Add option to use DeepGemm contiguous grouped gemm kernel for fused MoE operations. (#13932)
+[33ma57a3044a[m [ROCm][Build][Bugfix] Bring the base dockerfile in sync with the ROCm fork (#15820)
+[33m4e5a0f6ae[m [Misc] Allow using OpenCV as video IO fallback (#15055)
+[33mb63bd1499[m Reinstate `format.sh` and make `pre-commit` installation simpler (#15890)
+[33m2041c0e36[m [Doc] Quark quantization documentation (#15861)
+[33m085cbc4f9[m [New Model]: jinaai/jina-reranker-v2-base-multilingual  (#15876)
+[33m2b93162fb[m Remove `format.sh` as it's been unsupported >70 days (#15884)
+[33m2e45bd29f[m [Misc] remove unused script (#15746)
+[33m51d7c6a2b[m [Model] Support Mistral3 in the HF Transformers format (#15505)
+[33mf3aca1ee3[m setup correct nvcc version with CUDA_HOME (#15725)
+[33m8dd41d6bc[m [Misc] Use envs.VLLM_USE_RAY_COMPILED_DAG_CHANNEL_TYPE (#15831)
+[33m0a298ea41[m [Bugfix] Fix no video/image profiling edge case for `MultiModalDataParser` (#15828)
+[33md330558ba[m [Docs] Fix small error in link text (#15868)
+[33m656fd7297[m [Misc] Fix speculative config repr string (#15860)
+[33m79455cf42[m [Misc] Enable V1 LoRA by default (#15320)
+[33m30d6a015e[m [Feature] specify model in config.yaml (#15798)
+[33m8af5a5c4e[m fix: can not use uv run collect_env close #13888 (#15792)
+[33m3a5f0afcd[m [V1] Implement sliding window attention in kv_cache_manager (#14097)
+[33mc7e63aa4d[m [ROCm] Use device name in the warning (#15838)
+[33m4a9ce1784[m [sleep mode] clear pytorch cache after sleep (#15248)
+[33m7e4e709b4[m [V1] TPU - Fix fused MOE (#15834)
+[33m63d8eabed[m [Bugfix]: Fix is_embedding_layer condition in VocabParallelEmbedding  (#15824)
+[33me830b0138[m [Bugfix] Fix extra comma (#15851)
+[33mff6473980[m [Bugfix][Model] fix mllama multi-image (#14883)
+[33ma164aea35[m [Frontend] Add Phi-4-mini function calling support (#14886)
+[33ma76f547e1[m Rename fallback model and refactor supported models section (#15829)
+[33mb7b7676d6[m [Distributed] Add custom allreduce support for ROCM (#14125)
+[33me6e3c55ef[m Move dockerfiles into their own directory (#14549)
+[33mf98a4920f[m [V1][Core] Remove unused speculative config from scheduler (#15818)
+[33md4bfc23ef[m Fix Transformers backend compatibility check (#15290)
+[33m9a2160fa5[m [V1] TPU CI - Add basic perf regression test (#15414)
+[33m2de411824[m fix: change GB to GiB in logging close #14979 (#15807)
+[33m239b7befd[m [V1][Spec Decode] Remove deprecated spec decode config params (#15466)
+[33m09e974d48[m [Bugfix] Check dimensions of multimodal embeddings in V1 (#15816)
+[33me5ef4fa99[m Upgrade `transformers` to `v4.50.3` (#13905)
+[33m037bcd942[m [Bugfix] Fix missing return value in load_weights method of adapters.py (#15542)
+[33mc2e7507ad[m [Bugfix] Fix Crashing When Loading Modules With Batchnorm Stats (#15813)
+[33m3aa2b6a63[m [Model] Update support for NemotronNAS models (#15008)
+[33m555aa2190[m [V1] Fully Transparent Implementation of CPU Offloading (#15354)
+[33me7ae3bf3d[m fix: better install requirement for install in setup.py (#15796)
+[33mb932c048a[m Recommend developing with Python 3.12 in developer guide (#15811)
+[33me85829450[m [Feature][ROCm]Enable fusion pass for torch.compile on ROCm (#15050)
+[33meffc5d24f[m [Benchmark] Update Vision Arena Dataset and HuggingFaceDataset Setup (#15748)
+[33m18ed3132d[m [Misc] update the comments (#15780)
+[33m9b459eca8[m [V1][Scheduler] Avoid calling `_try_schedule_encoder_inputs` for every request (#15778)
+[33m70fedd0f7[m fix: Comments to English for better dev experience (#15768)
+[33mbb103b29b[m [Bugfix] Added `embed_is_patch` mask for fuyu model (#15731)
+[33m248e76c4d[m fix: lint fix a ruff checkout syntax error (#15767)
+[33m803d5c35f[m [V1] Override `mm_counts` for dummy data creation (#15703)
+[33m7fd8c0f85[m fix test_phi3v (#15321)
+[33m44c3a5abc[m [doc] update conda to usage link in installation (#15761)
+[33m6909a7620[m [Bugfix] Fix Mistral guided generation using xgrammar (#15704)
+[33m045533716[m [CI] xgrammar structured output supports Enum. (#15757)
+[33m3c0ff914a[m [Bugfix] Fix Mllama interleaved images input support (#15564)
+[33m2bc4be4e3[m [V1][Minor] Simplify rejection sampler's parse_output (#15741)
+[33mc67abd614[m [V1] Support interleaved modality items (#15605)
+[33m6fa7cd3db[m [Feature][Disaggregated] Support XpYd disaggregated prefill with MooncakeStore (#12957)
+[33m94744ba41[m [V1] [Feature] Collective RPC (#15444)
+[33m4965ec42d[m [FEAT] [ROCm] Add AITER int8 scaled gemm kernel (#15433)
+[33m73aa7041b[m [doc] update doc (#15740)
+[33m7c1f76002[m [Kernel][TPU][ragged-paged-attn] vLLM code change for PR#8896 (#15659)
+[33mda461f3cb[m [TPU][V1][Bugfix] Fix w8a8 recompiilation with GSM8K (#15714)
+[33m5b800f093[m [Bugfix] set VLLM_WORKER_MULTIPROC_METHOD=spawn for vllm.entrypoionts.openai.api_server (#15700)
+[33m8427f7049[m Use numba 0.61 for python 3.10+ to support numpy>=2 (#15692)
+[33m7a7992085[m [CI] Speed up V1 structured output tests (#15718)
+[33m1286211f5[m [Bugfix] LoRA V1: add and fix entrypoints tests (#15715)
+[33m6d531ad7b[m [Misc][V1] Misc code streamlining (#15723)
+[33m762b424a5[m [Docs] Document v0 engine support in reasoning outputs (#15739)
+[33mde1cb3876[m [Model] Support Skywork-R1V (#15397)
+[33mc802f5430[m [ROCm][AMD][Build] Update AMD supported arch list (#15632)
+[33mcff8991a5[m [Docs][V1] Optimize diagrams in prefix caching design (#15716)
+[33mf3f8d8fff[m implement prometheus fast-api-instrumentor for http service metrics (#15657)
+[33m26df46ee5[m [Misc] cli auto show default value (#15582)
+[33mc3f687ac2[m [V1] TPU - Fix the chunked prompt bug (#15713)
+[33m04437e313[m [Bugfix] [torch.compile] Add Dynamo metrics context during compilation (#15639)
+[33m038bededb[m [TPU] [Perf] Improve Memory Usage Estimation (#15671)
+[33md03308be0[m [Misc] Remove stale func in KVTransferConfig (#14746)
+[33mc6bc0034d[m [Misc] Remove unused utils and clean up imports (#15708)
+[33m70e132244[m [Minor] Remove TGI launching script  (#15646)
+[33m47e9038d2[m Fix cpu offload testing for gptq/awq/ct (#15648)
+[33m432cf22a6[m [Bugfix] Fix regex compile display format (#15368)
+[33m2914006fe[m [doc] add missing imports (#15699)
+[33m7329ff546[m [V1] Support disable_any_whtespace for guidance backend (#15584)
+[33m541d1df48[m [Bugfix] `embed_is_patch` for Idefics3 (#15696)
+[33m3b00ff913[m [Bugfix][v1] xgrammar structured output supports Enum. (#15594)
+[33m91276c572[m [Model] Adding torch compile annotations to chatglm (#15624)
+[33m0b4167526[m [Docs] Add "Generation quality changed" section to troubleshooting (#15701)
+[33mfd5fd2690[m [Frontend] update priority for --api-key and VLLM_API_KEY (#15588)
+[33m3bbaacbe1[m [Bugfix][Frontend] Eliminate regex based check in reasoning full generator (#14821)
+[33ma10314c6b[m [Misc] Fix test_sleep to use query parameters (#14373)
+[33m70f2c2a70[m [Bugfix] Fix 'InductorAdaptor object has no attribute 'cache_dir' (#15674)
+[33m280d07410[m [CPU][CI] Improve CPU Dockerfile (#15690)
+[33m32b14baf8[m [Refactor][Frontend] Keep all logic about reasoning into one class (#14428)
+[33m2d9045fce[m [TPU][CI] Fix TPUModelRunner Test (#15667)
+[33m355f66348[m [V1] Remove legacy input registry (#15673)
+[33m8693e47e6[m [Bugfix] Fix `mm_hashes` forgetting to be passed (#15668)
+[33mcec8c7d7f[m Refactor error handling for multiple exceptions in preprocessing (#15650)
+[33m4d0ec3726[m [Quantization][FP8] Adding support for fp8 gemm layer input in fp8 (#14578)
+[33me7f720ea5[m [Misc]add coding benchmark for speculative decoding (#15303)
+[33m4ae17bf1e[m Revert "Use Cache Hinting for fused_moe kernel (#15511)" (#15645)
+[33m8a49eea74[m [CI][TPU] Temporarily Disable Quant Test on TPU (#15649)
+[33mb4245a48d[m [Doc] Fix dead links in Job Board (#15637)
+[33m4e0f6076b[m [Bugfix] Fix failure to launch in Tensor Parallel TP mode on macOS. (#14948)
+[33m726efc6a3[m [Quantization][V1]  BitsAndBytes support V1 (#15611)
+[33mbd45912b9[m [TPU] Lazy Import (#15656)
+[33m15dac210f[m [V1] AsyncLLM data parallel (#13923)
+[33m112b3e5b3[m [CI] Update rules for applying `tpu` label. (#15634)
+[33m32d669275[m Correct PowerPC to modern IBM Power (#15635)

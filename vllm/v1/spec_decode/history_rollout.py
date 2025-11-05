@@ -71,7 +71,7 @@ class HistoryRolloutProposer:
         batch_draft_tokens = []
         for i in range(batch_size):
             if predict_tasks[i]:
-                batch_draft_tokens.append(predict_tasks[i])
+                batch_draft_tokens.append(ray.get(predict_tasks[i]))
             else:
                 batch_draft_tokens.append([])
         return batch_draft_tokens
