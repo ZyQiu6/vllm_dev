@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import ray
-import zmq
 import math
-import msgpack
 from enum import Enum
 
 def best_path_node(nodes):
@@ -166,12 +164,11 @@ class RewardAwareSuffixTree:
 
 @ray.remote(num_cpus=1)
 class SuffixTreeGroup:
-    def __init__(self, port: 5555):
+    def __init__(self):
         self._dict: dict[str, RewardAwareSuffixTree] = {}
         self.predict_times = 0
         self.effective_times = 0
         self.total_right_length = 0
-        self.port = port
 
     def __len__(self):
         return len(self._dict)
@@ -194,7 +191,7 @@ class SuffixTreeGroup:
         self.total_right_length += (accept_length - 1)
         return self._dict[prompt_id].predict(prefix, accept_length)
     
-    def predict(self, prompt_id, prefix, accept_length):
+    def predict_with_check(self, prompt_id, prefix, accept_length):
         if (not prompt_id in self._dict) or (not prefix):
             return []
         else:
@@ -213,7 +210,7 @@ class SuffixTreeGroup:
                 if accept_length_list[i] > 1:
                     self.effective_times += 1
                 self.total_right_length += (accept_length_list[i] - 1)
-                result.append(self._dict[prompt_id].predict(prefix_list[i], accept_length_list[i]))
+                result.append([self._dict[prompt_id].predict(prefix_list[i], accept_length_list[i])])
         # print(f"Every time predict costs {time.time() - begin_time} s")
         return result
     
@@ -245,55 +242,8 @@ class SuffixTreeGroup:
         self.predict_times = 0
         self.effective_times = 0
         self.total_right_length = 0
-    
-    def run(self):
-        context = zmq.Context()
-        socket = context.socket(zmq.REP)
-        socket.bind(f"tcp://*:{self.port}")
 
-        self.running = True
-        print(f"TreeGroup server started on port {self.port}")
-        
-        while self.running:
-            try:
-                message = socket.recv()
-                request = msgpack.unpackb(message)
-                
-                response = self._handle_request(request)
-                
-                socket.send(msgpack.packb(response))
-            except Exception as e:
-                error_response = {
-                    'status': 'error',
-                    'message': str(e)
-                }
-                socket.send(msgpack.packb(error_response))
-
-    def _handle_request(self, request):
-        method = request['method']
-        params = request['params']
-        
-        if method == 'predict':
-            return self.predict(
-                params['prompt_id'],
-                params['prefix'],
-                params['accept_length'],
-            )
-        elif method == 'predict_batch':
-            return self.predict_batch(
-                params['prompt_id_list'],
-                params['prefix_list'],
-                params['accept_length_list']
-            )
-        elif method == 'batch':
-            return [self._handle_request(req) for req in params['requests']]
-        elif method == 'stop':
-            self.running = False
-            return True
-        else:
-            return {'error': f'Unknown method: {method}'}
-
-_num_groups: int = 5 # fixed
+_num_groups: int = 4 # fixed
 history_tree_handle = []
 class GlobalRewardAwareSuffixTreeGroup:
     """
@@ -308,13 +258,6 @@ class GlobalRewardAwareSuffixTreeGroup:
                 self.groups.append(actor_handle)
             except ValueError:
                 print(f"Could not find the global actor.")
-        self.server_configs = {}
-        for i in range(_num_groups):
-            self.server_configs[i] = {
-                'host': 'localhost',
-                'port': 5555+i,
-            }
-        self._setup_connections()
 
     def update_prompt_ids(self):
         prompt_ids = []
@@ -342,7 +285,7 @@ class GlobalRewardAwareSuffixTreeGroup:
 
     def predict(self, prompt_id, prefix, accept_length):
         actor = self._get_partition(prompt_id)
-        return actor.predict.remote(prompt_id, prefix, accept_length)
+        return actor.predict_with_check.remote(prompt_id, prefix, accept_length)
     
     def predict_batch(self, prompt_id_list, sampled_token_list, prefix_length_list, accept_length_list):
         import time
@@ -366,8 +309,8 @@ class GlobalRewardAwareSuffixTreeGroup:
         for i in range(_num_groups):
             draft_token_list[i] = self.groups[i].predict_batch.remote(
                 params[i]['prompt_id_list'],
-                params[i]['prefix_list'],
-                params[i]['accept_length_list']
+                params[partition_id]['prefix_list'],
+                params[partition_id]['accept_length_list']
             )
         for i in range(_num_groups):
             draft_token_list[i] = ray.get(draft_token_list[i])
@@ -376,7 +319,7 @@ class GlobalRewardAwareSuffixTreeGroup:
         result = []
         for i in range(len(prompt_id_list)):
             result.append(next(iter_list[position_id[i]]))
-        # print(f"Every time predict costs {time.time() - begin_time} s")
+        print(f"Every time predict costs {time.time() - begin_time} s")
         return result
 
     def delete(self, prompt_id):
@@ -407,110 +350,10 @@ class GlobalRewardAwareSuffixTreeGroup:
         }
         return res
 
-    def _setup_connections(self):
-        self.servers = {}
-        for server_id, config in self.server_configs.items():
-            socket = zmq.Context().socket(zmq.REQ)
-            socket.setsockopt(zmq.RCVTIMEO, config.get('timeout', 5000))
-            server_url = f"tcp://{config['host']}:{config['port']}"
-            socket.connect(server_url)
-            self.servers[server_id] = {
-                'socket': socket,
-                'config': config,
-                'url': server_url
-            }
-        print(f"Connected to {len(self.servers)} servers: {list(self.servers.keys())}")
-    
-    def post_to_server(self, server_id, request):
-        if server_id not in self.servers:
-            return {'status': 'error', 'message': f'Unknown server: {server_id}'}
-        
-        socket = self.servers[server_id]['socket']
-        
-        try:
-            request_json = msgpack.packb(request)
-            socket.send(request_json)
-            response = socket.recv()
-            return msgpack.unpackb(response)
-        except Exception as e:
-            return RuntimeError({
-                'status': 'error',
-                'message': f'Communication error: {str(e)}'
-            })
-        
-    def post_to_all(self, request):
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        results = {}
-        
-        with ThreadPoolExecutor(max_workers=len(self.servers)) as executor:
-            future_to_server = {
-                executor.submit(self.post_to_server, server_id, request): server_id
-                for server_id in self.servers
-            }
-            
-            for future in as_completed(future_to_server):
-                server_id = future_to_server[future]
-                try:
-                    results[server_id] = future.result()
-                except Exception as e:
-                    results[server_id] = {'status': 'error', 'message': str(e)}
-        
-        return results
-        
-    def post_broadcast(self, requests):
-        results = {}
-        for server_id, request in requests.items():
-            results[server_id] = self.post_to_server(server_id, request)
-
-        return results
-    
-    def post_predict_batch(self, prompt_id_list, sampled_token_list, prefix_length_list, accept_length_list):
-        import time
-        begin_time = time.time()
-        position_id = []
-        params = {
-            server_id: {
-                'prompt_id_list': [],
-                'prefix_list': [],
-                'accept_length_list': [],
-            } for server_id in range(_num_groups)}
-        draft_token_list = [None for _ in range(_num_groups)]
-        for i in range(len(prompt_id_list)):
-            partition_id = self._get_partition_id(prompt_id_list[i])
-            params[partition_id]['prompt_id_list'].append(prompt_id_list[i])
-            if len(sampled_token_list[i]) < prefix_length_list[i]:
-                params[partition_id]['prefix_list'].append([])
-            else:
-                params[partition_id]['prefix_list'].append(sampled_token_list[i][-prefix_length_list[i]:])
-            params[partition_id]['accept_length_list'].append(accept_length_list[i])
-            position_id.append(partition_id)
-        # response = asyncio.run(self.post_broadcast({
-        #     i: {'method': 'predict_batch', 'params': params[i]} for i in range(_num_groups)
-        # }))
-        response = self.post_broadcast({
-            i: {'method': 'predict_batch', 'params': params[i]} for i in range(_num_groups)
-        })
-        draft_token_list = []
-        for i in range(_num_groups):
-            draft_token_list.append(response[i])
-
-        iter_list = [iter(draft_tokens) for draft_tokens in draft_token_list]
-        result = []
-        for i in range(len(prompt_id_list)):
-            result.append(next(iter_list[position_id[i]]))
-        # print(f"Every time predict costs {time.time() - begin_time} s")
-        return result
-    
-    def run_server(self):
-        return [p.run.remote() for p in self.groups]
-    
-    def stop_server(self):
-        return self.post_to_all({'method': 'stop', 'params': {}})
-
 def init_history_trees():
     global history_tree_handle
     for i in range(_num_groups):
-        actor_handle = SuffixTreeGroup.options(name=f"global_tree_{i}").remote(port=5555+i)
+        actor_handle = SuffixTreeGroup.options(name=f"global_tree_{i}").remote()
         history_tree_handle.append(actor_handle)
     for i in range(_num_groups):
         try:

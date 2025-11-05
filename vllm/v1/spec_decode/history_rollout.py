@@ -9,15 +9,12 @@ from vllm.v1.spec_decode.global_module.suffix_tree import get_history_trees
 class HistoryRolloutProposer:
     def __init__(self, vllm_config: VllmConfig):
         # Minimum length of the HistoryRolloutTree to match.
-        self.min_n = vllm_config.speculative_config.prompt_lookup_min
+        self.min_n = 2
         # Maximum length of the HistoryRolloutTree to match.
         self.max_n = vllm_config.speculative_config.prompt_lookup_max
         # self.k = vllm_config.speculative_config.num_speculative_tokens
         self.history_trees = get_history_trees()
         self.prompt_lookup = vllm_config.speculative_config.prompt_lookup_max
-
-    def update_history_trees(self):
-        self.history_trees.update_prompt_ids()
 
     def propose(
         self,
@@ -30,14 +27,10 @@ class HistoryRolloutProposer:
         """
         prompt_id = str(hash(tuple(prompt_token_ids)))
         
-        if not ray.get(self.history_trees.exist(prompt_id)):
-            return []
         draft_tokens = []
-        if len(sampled_token_ids) >= self.prompt_lookup:
-            prefix = sampled_token_ids[-self.prompt_lookup:]
+        if len(sampled_token_ids) >= self.min_n:
+            prefix = sampled_token_ids[-self.min_n:]
             draft_tokens = ray.get(self.history_trees.predict(prompt_id, prefix, accept_length))
-            if len(draft_tokens) == 0:
-                self.prompt_lookup = max(self.prompt_lookup - 1, self.min_n)
         return draft_tokens
 
     def propose_batch(
@@ -50,31 +43,14 @@ class HistoryRolloutProposer:
         speculative decoding pattern.
         """
         batch_size = len(accept_length_list)
-        exist_tasks = []
-        for i in range(batch_size):
-            prompt_id = str(hash(tuple(prompt_token_id_list[i])))
-            exist_tasks.append(self.history_trees.exist(prompt_id))
-
-        exist_res = ray.get(exist_tasks)
-        predict_tasks = []
-        for i in range(batch_size):
-            if not exist_res[i]:
-                predict_tasks.append(None)
-            else:
-                sampled_token_ids = sampled_token_id_list[i]
-                prompt_id = str(hash(tuple(prompt_token_id_list[i])))
-                if len(sampled_token_ids) >= self.min_n:
-                    prefix = sampled_token_ids[-self.min_n:]
-                    predict_tasks.append(self.history_trees.predict(prompt_id, prefix, accept_length_list[i]))
-                else:
-                    predict_tasks.append(None)
-
-        batch_draft_tokens = []
-        for i in range(batch_size):
-            if predict_tasks[i]:
-                batch_draft_tokens.append(ray.get(predict_tasks[i]))
-            else:
-                batch_draft_tokens.append([])
+        prompt_id_list = [str(hash(tuple(prompt_token_id))) for prompt_token_id in prompt_token_id_list]
+        prefix_length_list = [self.min_n for _ in range(batch_size)]
+        batch_draft_tokens = self.history_trees.post_predict_batch(
+            prompt_id_list,
+            sampled_token_id_list,
+            prefix_length_list,
+            accept_length_list
+        )
         return batch_draft_tokens
 
     def load_model(self, *args, **kwargs):
