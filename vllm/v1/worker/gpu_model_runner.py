@@ -1164,30 +1164,31 @@ class GPUModelRunner(LoRAModelRunnerMixin):
             prompt_token_ids：请求状态中原始的提示词token序列
             spec_token_ids: 存储每个请求的下一轮的推测token序列，经验证后裁剪为下一轮的sampled_ids
             """
-            # spec_token_ids = []
-            # for i, sampled_ids in enumerate(valid_sampled_token_ids):
-            #     req_id = self.input_batch.req_ids[i]
-            #     req_state = self.requests[req_id]
-            #     single_spec_token_ids = self.drafter.propose(
-            #         len(sampled_ids),
-            #         req_state.output_token_ids + sampled_ids,
-            #         req_state.prompt_token_ids)
-            #     spec_token_ids.append(single_spec_token_ids)
-            # Propose batch to accelerate the process
-            accept_length_list = []
-            sampled_token_id_list = []
-            prompt_token_id_list = []
+            self.drafter.update_history_trees()
+            spec_token_ids = []
             for i, sampled_ids in enumerate(valid_sampled_token_ids):
                 req_id = self.input_batch.req_ids[i]
                 req_state = self.requests[req_id]
-                accept_length_list.append(len(sampled_ids))
-                sampled_token_id_list.append(req_state.output_token_ids + sampled_ids)
-                prompt_token_id_list.append(req_state.prompt_token_ids)
-            spec_token_ids = self.drafter.propose_batch(
-                accept_length_list,
-                sampled_token_id_list,
-                prompt_token_id_list
-            )
+                single_spec_token_ids = self.drafter.propose(
+                    len(sampled_ids),
+                    req_state.output_token_ids + sampled_ids,
+                    req_state.prompt_token_ids)
+                spec_token_ids.append(single_spec_token_ids)
+            # Propose batch to accelerate the process
+            # accept_length_list = []
+            # sampled_token_id_list = []
+            # prompt_token_id_list = []
+            # for i, sampled_ids in enumerate(valid_sampled_token_ids):
+            #     req_id = self.input_batch.req_ids[i]
+            #     req_state = self.requests[req_id]
+            #     accept_length_list.append(len(sampled_ids))
+            #     sampled_token_id_list.append(req_state.output_token_ids + sampled_ids)
+            #     prompt_token_id_list.append(req_state.prompt_token_ids)
+            # spec_token_ids = self.drafter.propose_batch(
+            #     accept_length_list,
+            #     sampled_token_id_list,
+            #     prompt_token_id_list
+            # )
         elif self.speculative_config.method == "eagle":
             assert isinstance(self.drafter, EagleProposer)
             # TODO(woosuk): Refactor the loop.
