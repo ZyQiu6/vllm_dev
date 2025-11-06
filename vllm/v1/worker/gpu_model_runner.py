@@ -1154,6 +1154,7 @@ class GPUModelRunner(LoRAModelRunnerMixin):
                 valid_sampled_token_ids, sampling_metadata)
         elif self.speculative_config.method == "history_rollout":
             assert isinstance(self.drafter, HistoryRolloutProposer)
+            begin_time = time.time()
             # spec_token_ids = []
             # for i, sampled_ids in enumerate(valid_sampled_token_ids):
             #     req_id = self.input_batch.req_ids[i]
@@ -1164,20 +1165,24 @@ class GPUModelRunner(LoRAModelRunnerMixin):
             #         req_state.prompt_token_ids)
             #     spec_token_ids.append(single_spec_token_ids)
             # Propose batch to accelerate the process
-            accept_length_list = []
-            sampled_token_id_list = []
-            prompt_token_id_list = []
-            for i, sampled_ids in enumerate(valid_sampled_token_ids):
-                req_id = self.input_batch.req_ids[i]
-                req_state = self.requests[req_id]
-                accept_length_list.append(len(sampled_ids))
-                sampled_token_id_list.append(req_state.output_token_ids + sampled_ids)
-                prompt_token_id_list.append(req_state.prompt_token_ids)
-            spec_token_ids = self.drafter.propose_batch(
-                accept_length_list,
-                sampled_token_id_list,
-                prompt_token_id_list
-            )
+            if len(valid_sampled_token_ids) > 3:
+                accept_length_list = []
+                sampled_token_id_list = []
+                prompt_token_id_list = []
+                for i, sampled_ids in enumerate(valid_sampled_token_ids):
+                    req_id = self.input_batch.req_ids[i]
+                    req_state = self.requests[req_id]
+                    accept_length_list.append(len(sampled_ids))
+                    sampled_token_id_list.append(req_state.output_token_ids + sampled_ids)
+                    prompt_token_id_list.append(req_state.prompt_token_ids)
+                spec_token_ids = self.drafter.propose_batch(
+                    accept_length_list,
+                    sampled_token_id_list,
+                    prompt_token_id_list
+                )
+            else:
+                spec_token_ids = [[] for _ in range(len(valid_sampled_token_ids))]
+            # print(f"Elapsed time : {self.time + time.time() - begin_time} s")
         elif self.speculative_config.method == "eagle":
             assert isinstance(self.drafter, EagleProposer)
             # TODO(woosuk): Refactor the loop.

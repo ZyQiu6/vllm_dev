@@ -58,7 +58,7 @@ class RewardAwareSuffixTree:
         self.root = TrieNode()
         self.subpath_index = {} # use tokens to represent nodes
         self.state = CongestionState.SLOW_START
-        self.wnd_size: int = 3 # number of predicted tokens
+        self.wnd_size: int = 8 # number of predicted tokens
         self.ssthresh = 16
         self.max_wnd = 28
         self.spec_enable = True
@@ -124,7 +124,7 @@ class RewardAwareSuffixTree:
             if self.wnd_size == self.ssthresh:
                 self.state = CongestionState.SLOW_INCREASE
         elif self.state == CongestionState.CONGESTION_AVOIDANCE:
-            self.wnd_size = max(self.wnd_size // 2, 3)
+            self.wnd_size = max(self.wnd_size // 2, 4)
         elif self.state == CongestionState.SLOW_INCREASE:
             self.wnd_size = min(self.wnd_size + 1, self.max_wnd)
 
