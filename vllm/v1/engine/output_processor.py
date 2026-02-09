@@ -447,6 +447,19 @@ class OutputProcessor:
             if request_output := req_state.make_request_output(
                     new_token_ids, pooling_output, finish_reason, stop_reason,
                     kv_transfer_params):
+                # HSpec: attach hidden states that were transferred from the
+                # EngineCore process (multiprocessing). We cannot access the
+                # EngineCore process' global store from the front-end process.
+                if (finish_reason is not None and pooling_output is None):
+                    hs = getattr(engine_core_output, "hspec_hidden_states",
+                                 None)
+                    if hs is not None:
+                        try:
+                            for out in getattr(request_output, "outputs", []):
+                                if isinstance(out, CompletionOutput):
+                                    out.hidden_states = hs
+                        except Exception:
+                            pass
                 if req_state.queue is not None:
                     # AsyncLLM: put into queue for handling by generate().
                     req_state.queue.put(request_output)

@@ -45,6 +45,11 @@ class CompletionOutput:
     finish_reason: Optional[str] = None
     stop_reason: Union[int, str, None] = None
     lora_request: Optional[LoRARequest] = None
+    # HSpec: per-request anchor hidden states collected during generation.
+    # Shape (seq_len, hidden_dim), dtype float16, numpy ndarray.
+    # Populated only when HSpec hidden-state collection is enabled;
+    # otherwise ``None``.
+    hidden_states: Optional[Any] = None
 
     def finished(self) -> bool:
         return self.finish_reason is not None

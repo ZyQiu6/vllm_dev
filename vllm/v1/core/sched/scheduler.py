@@ -959,6 +959,26 @@ class Scheduler(SchedulerInterface):
             if new_token_ids or pooler_output is not None \
                 or kv_transfer_params:
 
+                # HSpec: pop accumulated hidden states for finished
+                # requests so they can be serialized to the front-end
+                # process via EngineCoreOutput.
+                hspec_hs = None
+                if stopped:
+                    # IMPORTANT(perf): keep all overhead off the hot path when
+                    # HSpec is not enabled. The extra import / lock acquisition
+                    # would otherwise occur for every finished request.
+                    spec_cfg = getattr(self.vllm_config, "speculative_config",
+                                       None)
+                    if (spec_cfg is not None
+                            and getattr(spec_cfg, "method", None) == "hspec"):
+                        try:
+                            from vllm_ascend.spec_decode.hspec_utils import (
+                                hspec_pop_request,
+                            )
+                            hspec_hs = hspec_pop_request(req_id)
+                        except (ImportError, Exception):
+                            pass
+
                 # Add EngineCoreOutput for this Request.
                 outputs[request.client_index].append(
                     EngineCoreOutput(
@@ -973,6 +993,7 @@ class Scheduler(SchedulerInterface):
                         kv_transfer_params=kv_transfer_params,
                         trace_headers=request.trace_headers,
                         num_cached_tokens=request.num_cached_tokens,
+                        hspec_hidden_states=hspec_hs,
                     ))
             else:
                 # Invariant: EngineCore returns no partial prefill outputs.

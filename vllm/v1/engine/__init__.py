@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from typing import Any, Optional, Union
 
 import msgspec
+import numpy as np
 import torch
 
 from vllm.lora.request import LoRARequest
@@ -118,6 +119,13 @@ class EngineCoreOutput(
     trace_headers: Optional[Mapping[str, str]] = None
     # The number of tokens with prefix cache hits.
     num_cached_tokens: int = 0
+
+    # HSpec: anchor hidden states for finished requests.
+    # Shape (seq_len, hidden_dim), dtype float16, numpy ndarray.
+    # Populated by the scheduler (same process as model_runner) when a
+    # request finishes; serialized via MsgpackEncoder to the front-end
+    # process where the output_processor reads it.
+    hspec_hidden_states: Optional[np.ndarray] = None
 
     @property
     def finished(self) -> bool:

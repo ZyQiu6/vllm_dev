@@ -32,7 +32,8 @@ logger = init_logger(__name__)
 SpeculativeMethod = Literal["ngram", "eagle", "eagle3", "medusa",
                             "mlp_speculator", "draft_model", "deepseek_mtp",
                             "ernie_mtp", "qwen3_next_mtp", "mimo_mtp",
-                            "longcat_flash_mtp", "mtp", "history_rollout"]
+                            "longcat_flash_mtp", "mtp", "history_rollout",
+                            "hspec"]
 MTP_MODEL_TYPES = ("deepseek_mtp", "mimo_mtp", "glm4_moe_mtp", "ernie_mtp",
                    "qwen3_next_mtp", "longcat_flash_mtp")
 
@@ -58,6 +59,11 @@ class SpeculativeConfig:
 
     If using `ngram` method, the related configuration `prompt_lookup_max` and
     `prompt_lookup_min` should be considered."""
+    # HSpec proposer configuration (optional; plugin-defined).
+    # Kept in SpeculativeConfig so that EngineArgs → SpeculativeConfig
+    # validation accepts these fields when method="hspec".
+    hspec_similarity_threshold: Optional[float] = None
+    hspec_min_match_len: Optional[int] = None
     draft_tensor_parallel_size: Optional[int] = None
     """The degree of the tensor parallelism for the draft model. Can only be 1
     or the same as the target model's tensor parallel size."""
@@ -233,8 +239,11 @@ class SpeculativeConfig:
                     self.quantization = self.target_model_config.quantization
             elif self.method in ("ngram", "[ngram]"):
                 self.model = "ngram"
-            elif self.method == "history_rollout":
+            elif self.method in ("history_rollout", "[history_rollout]"):
                 self.model = "history_rollout"
+            elif self.method in ("hspec", "[hspec]"):
+                # Non-model proposer implemented by platform plugins.
+                self.model = "hspec"
             else:
                 raise ValueError(
                     "num_speculative_tokens was provided but without "
@@ -309,6 +318,16 @@ class SpeculativeConfig:
             # TODO: current we still need extract vocab_size from target model
             # config, in future, we may try refactor it out, and set
             # draft related config as None here.
+            self.draft_model_config = self.target_model_config
+            self.draft_parallel_config = self.target_parallel_config
+        elif self.method in ("hspec", "[hspec]"):
+            # Non-model proposer implemented by platform plugins.
+            # No prompt-lookup parameters are required for HSpec.
+            self.method = "hspec"
+            self.prompt_lookup_max = 0
+            self.prompt_lookup_min = 0
+            # Keep draft configs identical to target so downstream verification
+            # and parallel-config checks pass.
             self.draft_model_config = self.target_model_config
             self.draft_parallel_config = self.target_parallel_config
         else:
