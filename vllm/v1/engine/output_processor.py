@@ -458,6 +458,28 @@ class OutputProcessor:
                             for out in getattr(request_output, "outputs", []):
                                 if isinstance(out, CompletionOutput):
                                     out.hidden_states = hs
+                            # Debug (opt-in): print one sample per request.
+                            # Use print() so it appears even if vLLM logging is WARN.
+                            try:
+                                import os as _os
+                                if _os.getenv("HSPEC_DEBUG", "0") == "1":
+                                    # token_ids already prepared in CompletionOutput
+                                    # (full completion, not delta).
+                                    tok_len = None
+                                    try:
+                                        tok_len = len(getattr(request_output.outputs[0], "token_ids", []))  # type: ignore[attr-defined]
+                                    except Exception:
+                                        tok_len = None
+                                    print(
+                                        "[HSPEC_DEBUG] output_processor.attach"
+                                        f" request_id={req_id}"
+                                        f" hs_shape={getattr(hs,'shape',None)}"
+                                        f" hs_dtype={getattr(hs,'dtype',None)}"
+                                        f" token_ids_len={tok_len}",
+                                        flush=True,
+                                    )
+                            except Exception:
+                                pass
                         except Exception:
                             pass
                 if req_state.queue is not None:
