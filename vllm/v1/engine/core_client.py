@@ -245,7 +245,16 @@ class InprocClient(EngineCoreClient):
         self.engine_core = EngineCore(*args, **kwargs)
 
     def get_output(self) -> EngineCoreOutputs:
-        outputs, _ = self.engine_core.step_fn()
+        outputs, model_executed = self.engine_core.step_fn()
+        # IMPORTANT: In in-process (non-multiprocess) mode, we bypass
+        # EngineCore.run_busy_loop() and call step_fn() directly. The busy loop
+        # normally invokes EngineCore.post_step(), which is required for
+        # speculative decoding to feed DraftTokenIds back into the scheduler.
+        #
+        # Without this call, HSPEC can generate draft tokens, but the scheduler
+        # will never see them, so scheduler_output.scheduled_spec_decode_tokens
+        # stays empty and use_spec_decode remains False.
+        self.engine_core.post_step(model_executed)
         return outputs and outputs.get(0) or EngineCoreOutputs()
 
     def get_supported_tasks(self) -> tuple[SupportedTask, ...]:

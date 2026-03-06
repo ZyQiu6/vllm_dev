@@ -109,8 +109,14 @@ class Executor(ExecutorBase):
         self.collective_rpc("execute_dummy_batch")
 
     def take_draft_token_ids(self) -> Optional[DraftTokenIds]:
-        output = self.collective_rpc("take_draft_token_ids")
-        return output[0]
+        outputs = self.collective_rpc("take_draft_token_ids")
+        # Draft tokens may be produced on a subset of ranks depending on the
+        # proposer implementation and cache readiness. Pick the first non-empty
+        # result to avoid silently dropping drafts.
+        for out in outputs:
+            if out is not None:
+                return out
+        return None
 
     @property
     def max_concurrent_batches(self) -> int:
