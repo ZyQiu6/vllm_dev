@@ -300,8 +300,7 @@ class EngineCore:
                 # tokens and use_spec_decode stays false.
                 spec_cfg = getattr(self.vllm_config, "speculative_config", None)
                 if (spec_cfg is not None and getattr(spec_cfg, "method", None) == "hspec"
-                        and (os.getenv("HSPEC_DEBUG", "0") != "0"
-                             or os.getenv("HSPEC_TRACE", "0") != "0")):
+                        and (os.getenv("HSPEC_TRACE", "0") != "0")):
                     logger.warning(
                         "HSPEC TRACE EngineCore.post_step: draft_token_ids is None "
                         "(scheduler will not schedule spec tokens next step)"
