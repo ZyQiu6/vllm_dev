@@ -188,6 +188,8 @@ class RequestState:
         finish_reason: Optional[FinishReason],
         stop_reason: Union[int, str, None],
         kv_transfer_params: Optional[dict[str, Any]] = None,
+        hspec_hidden_states: Optional[Any] = None,
+        hspec_token_ids: Optional[Any] = None,
     ) -> Optional[Union[RequestOutput, PoolingRequestOutput]]:
 
         finished = finish_reason is not None
@@ -205,6 +207,14 @@ class RequestState:
 
         output = self._new_completion_output(new_token_ids, finish_reason,
                                              stop_reason)
+        # HSpec: hidden states belong to the *child completion*, not to the
+        # eventual aggregated parent RequestOutput. Attach before parent
+        # aggregation so each CompletionOutput carries its own token-aligned
+        # sequence when n > 1 parallel sampling is enabled.
+        if hspec_hidden_states is not None and isinstance(output, CompletionOutput):
+            output.hidden_states = hspec_hidden_states
+        if hspec_token_ids is not None and isinstance(output, CompletionOutput):
+            output.hspec_token_ids = hspec_token_ids
 
         if self.parent_req is None:
             outputs = [output]
@@ -446,20 +456,15 @@ class OutputProcessor:
             # 4) Create and handle RequestOutput objects.
             if request_output := req_state.make_request_output(
                     new_token_ids, pooling_output, finish_reason, stop_reason,
-                    kv_transfer_params):
-                # HSpec: attach hidden states that were transferred from the
-                # EngineCore process (multiprocessing). We cannot access the
-                # EngineCore process' global store from the front-end process.
-                if (finish_reason is not None and pooling_output is None):
-                    hs = getattr(engine_core_output, "hspec_hidden_states",
-                                 None)
-                    if hs is not None:
-                        try:
-                            for out in getattr(request_output, "outputs", []):
-                                if isinstance(out, CompletionOutput):
-                                    out.hidden_states = hs
-                        except Exception:
-                            pass
+                    kv_transfer_params,
+                    hspec_hidden_states=getattr(
+                        engine_core_output, "hspec_hidden_states", None
+                    ) if (finish_reason is not None and pooling_output is None)
+                    else None,
+                    hspec_token_ids=getattr(
+                        engine_core_output, "hspec_token_ids", None
+                    ) if (finish_reason is not None and pooling_output is None)
+                    else None):
                 if req_state.queue is not None:
                     # AsyncLLM: put into queue for handling by generate().
                     req_state.queue.put(request_output)

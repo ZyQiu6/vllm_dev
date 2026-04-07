@@ -50,6 +50,10 @@ class CompletionOutput:
     # Populated only when HSpec hidden-state collection is enabled;
     # otherwise ``None``.
     hidden_states: Optional[Any] = None
+    # HSpec: exact token ids whose anchor hidden states were collected.
+    # This is the token sequence aligned 1-to-1 with ``hidden_states`` and is
+    # intended for trainer-side HSpec table building / offline analysis.
+    hspec_token_ids: Optional[Any] = None
 
     def finished(self) -> bool:
         return self.finish_reason is not None

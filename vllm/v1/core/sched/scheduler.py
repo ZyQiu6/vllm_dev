@@ -963,6 +963,7 @@ class Scheduler(SchedulerInterface):
                 # requests so they can be serialized to the front-end
                 # process via EngineCoreOutput.
                 hspec_hs = None
+                hspec_tok = None
                 if stopped:
                     # IMPORTANT(perf): keep all overhead off the hot path when
                     # HSpec is not enabled. The extra import / lock acquisition
@@ -975,8 +976,14 @@ class Scheduler(SchedulerInterface):
                             from vllm_ascend.spec_decode.hspec_utils import (
                                 hspec_pop_request,
                             )
-                            hspec_hs = hspec_pop_request(req_id)
+                            hspec_payload = hspec_pop_request(req_id)
+                            if hspec_payload is not None:
+                                hspec_hs = hspec_payload.get("hidden_states")
+                                hspec_tok = hspec_payload.get("token_ids")
+                            else:
+                                hspec_tok = None
                         except (ImportError, Exception):
+                            hspec_tok = None
                             pass
 
                 # Add EngineCoreOutput for this Request.
@@ -994,6 +1001,7 @@ class Scheduler(SchedulerInterface):
                         trace_headers=request.trace_headers,
                         num_cached_tokens=request.num_cached_tokens,
                         hspec_hidden_states=hspec_hs,
+                        hspec_token_ids=hspec_tok,
                     ))
             else:
                 # Invariant: EngineCore returns no partial prefill outputs.

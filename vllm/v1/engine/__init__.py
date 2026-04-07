@@ -126,6 +126,8 @@ class EngineCoreOutput(
     # request finishes; serialized via MsgpackEncoder to the front-end
     # process where the output_processor reads it.
     hspec_hidden_states: Optional[np.ndarray] = None
+    # HSpec: exact token ids aligned 1-to-1 with ``hspec_hidden_states``.
+    hspec_token_ids: Optional[list[int]] = None
 
     @property
     def finished(self) -> bool:
